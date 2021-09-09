@@ -834,8 +834,8 @@ public class UserVmManagerTest {
     }
 
     // vm is running in network with dhcp support
-    @Test(expected = InvalidParameterValueException.class)
-    public void testUpdateVmNicIpFailure1() throws Exception {
+    @Test
+    public void testUpdateVmNicIpWhenRunning() throws Exception {
         UpdateVmNicIpCmd cmd = new UpdateVmNicIpCmd();
         Class<?> _class = cmd.getClass();
 
@@ -852,6 +852,7 @@ public class UserVmManagerTest {
         when(_vmDao.findById(anyLong())).thenReturn(_vmMock);
         when(_networkDao.findById(anyLong())).thenReturn(_networkMock);
         when(_networkMock.getState()).thenReturn(Network.State.Implemented);
+        when(_dcDao.findById(anyLong())).thenReturn(_dcMock);
         doReturn(9L).when(_networkMock).getNetworkOfferingId();
         when(_networkOfferingDao.findByIdIncludingRemoved(anyLong())).thenReturn(_networkOfferingMock);
         doReturn(10L).when(_networkOfferingMock).getId();
