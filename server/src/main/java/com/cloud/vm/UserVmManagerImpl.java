@@ -1552,7 +1552,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         if (offering == null) {
             throw new InvalidParameterValueException("There is no network offering with the network");
         }
-        if (!_networkModel.listNetworkOfferingServices(offering.getId()).isEmpty() && vm.getState() != State.Stopped) {
+        if (!_networkModel.listNetworkOfferingServices(offering.getId()).isEmpty() && vm.getState() != State.Stopped && vm.getState() != State.Running) {
             InvalidParameterValueException ex = new InvalidParameterValueException(
                     "VM is not Stopped, unable to update the vm nic having the specified id");
             ex.addProxyObject(vm.getUuid(), "vmId");
