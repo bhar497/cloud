@@ -33,6 +33,8 @@ import javax.naming.ConfigurationException;
 import com.cloud.utils.db.Filter;
 import com.cloud.utils.fsm.StateMachine2;
 
+import org.apache.cloudstack.framework.config.ConfigKey;
+import org.apache.cloudstack.framework.config.Configurable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.apache.cloudstack.affinity.AffinityGroupProcessor;
@@ -135,7 +137,7 @@ import com.cloud.vm.dao.UserVmDao;
 import com.cloud.vm.dao.VMInstanceDao;
 
 public class DeploymentPlanningManagerImpl extends ManagerBase implements DeploymentPlanningManager, Manager, Listener,
-StateListener<State, VirtualMachine.Event, VirtualMachine> {
+StateListener<State, VirtualMachine.Event, VirtualMachine>, Configurable {
 
     private static final Logger s_logger = Logger.getLogger(DeploymentPlanningManagerImpl.class);
     @Inject
@@ -271,6 +273,9 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
         }
 
         String haVmTag = (String)vmProfile.getParameter(VirtualMachineProfile.Param.HaTag);
+
+        // TODO: Nate - Add disabled clusters to avoid like in https://github.com/apache/cloudstack/commit/a3cdd1f836e40a4b4444af738780a337ee7aac1d#diff-beeb19d6661bbc4797c3a37da7b55d964ba344ff2af6d6ec495d16697c11fc99R293
+        avoidDisabledResources(dc, avoids);
 
         if (plan.getHostId() != null && haVmTag == null) {
             Long hostIdSpecified = plan.getHostId();
@@ -546,6 +551,43 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
         }
 
         return dest;
+    }
+
+    /**
+     * Adds disabled resources (Data centers, Pods, Clusters) to exclude list (avoid) in case of disabled state.
+     */
+    public void avoidDisabledResources(DataCenter dc, ExcludeList avoids) {
+        avoidDisabledDataCenters(dc, avoids);
+        avoidDisabledPods(dc, avoids);
+        avoidDisabledClusters(dc, avoids);
+    }
+
+    /**
+     * Adds disabled Clusters to the ExcludeList in order to avoid them at the deployment planner.
+     */
+    protected void avoidDisabledClusters(DataCenter dc, ExcludeList avoids) {
+        List<Long> pods = _podDao.listAllPods(dc.getId());
+        for (Long podId : pods) {
+            List<Long> disabledClusters = _clusterDao.listDisabledClusters(dc.getId(), podId);
+            avoids.addClusterList(disabledClusters);
+        }
+    }
+
+    /**
+     * Adds disabled Pods to the ExcludeList in order to avoid them at the deployment planner.
+     */
+    protected void avoidDisabledPods(DataCenter dc, ExcludeList avoids) {
+        List<Long> disabledPods = _podDao.listDisabledPods(dc.getId());
+        avoids.addPodList(disabledPods);
+    }
+
+    /**
+     * Adds disabled Data Centers (Zones) to the ExcludeList in order to avoid them at the deployment planner.
+     */
+    protected void avoidDisabledDataCenters(DataCenter dc, ExcludeList avoids) {
+        if (dc.getAllocationState() == Grouping.AllocationState.Disabled) {
+            avoids.addDataCenter(dc.getId());
+        }
     }
 
     @Override
@@ -1614,5 +1656,15 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
         _reservationDao.expunge(sc);
       }
       return true;
+    }
+
+    @Override
+    public ConfigKey<?>[] getConfigKeys() {
+        return new ConfigKey<?>[] {drainDisabledClusters};
+    }
+
+    @Override
+    public String getConfigComponentName() {
+        return DeploymentPlanningManager.class.getSimpleName();
     }
 }

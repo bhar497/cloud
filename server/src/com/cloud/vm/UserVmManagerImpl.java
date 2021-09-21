@@ -901,34 +901,42 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         }
 
         if (vm.getState() == State.Running && vm.getHostId() != null) {
-            collectVmDiskStatistics(vm);
-            collectVmNetworkStatistics(vm);
-            DataCenterVO dc = _dcDao.findById(vm.getDataCenterId());
-            try {
-                if (dc.getNetworkType() == DataCenter.NetworkType.Advanced) {
-                    //List all networks of vm
-                    List<Long> vmNetworks = _vmNetworkMapDao.getNetworks(vmId);
-                    List<DomainRouterVO> routers = new ArrayList<DomainRouterVO>();
-                    //List the stopped routers
-                    for(long vmNetworkId : vmNetworks) {
-                        List<DomainRouterVO> router = _routerDao.listStopped(vmNetworkId);
-                        routers.addAll(router);
-                    }
-                    //A vm may not have many nics attached and even fewer routers might be stopped (only in exceptional cases)
-                    //Safe to start the stopped router serially, this is consistent with the way how multiple networks are added to vm during deploy
-                    //and routers are started serially ,may revisit to make this process parallel
-                    for(DomainRouterVO routerToStart : routers) {
-                        s_logger.warn("Trying to start router " + routerToStart.getInstanceName() + " as part of vm: " + vm.getInstanceName() + " reboot");
-                        _virtualNetAppliance.startRouter(routerToStart.getId(),true);
-                    }
+            Host host = _hostDao.findById(vm.getHostId());
+            if (host.isDisabled()) {
+                s_logger.info("Performing full stop & start instead of reboot on vm " + vm.getInstanceName() + " due to host being disabled");
+                if (stopVirtualMachine(userId, vmId)) {
+                    startVirtualMachine(vmId, null, null, null);
                 }
-            } catch (ConcurrentOperationException e) {
-                throw new CloudRuntimeException("Concurrent operations on starting router. " + e);
-            } catch (Exception ex){
-                throw new CloudRuntimeException("Router start failed due to" + ex);
-            }finally {
-                s_logger.info("Rebooting vm " + vm.getInstanceName());
-                _itMgr.reboot(vm.getUuid(), null);
+            } else {
+                collectVmDiskStatistics(vm);
+                collectVmNetworkStatistics(vm);
+                DataCenterVO dc = _dcDao.findById(vm.getDataCenterId());
+                try {
+                    if (dc.getNetworkType() == DataCenter.NetworkType.Advanced) {
+                        //List all networks of vm
+                        List<Long> vmNetworks = _vmNetworkMapDao.getNetworks(vmId);
+                        List<DomainRouterVO> routers = new ArrayList<DomainRouterVO>();
+                        //List the stopped routers
+                        for(long vmNetworkId : vmNetworks) {
+                            List<DomainRouterVO> router = _routerDao.listStopped(vmNetworkId);
+                            routers.addAll(router);
+                        }
+                        //A vm may not have many nics attached and even fewer routers might be stopped (only in exceptional cases)
+                        //Safe to start the stopped router serially, this is consistent with the way how multiple networks are added to vm during deploy
+                        //and routers are started serially ,may revisit to make this process parallel
+                        for(DomainRouterVO routerToStart : routers) {
+                            s_logger.warn("Trying to start router " + routerToStart.getInstanceName() + " as part of vm: " + vm.getInstanceName() + " reboot");
+                            _virtualNetAppliance.startRouter(routerToStart.getId(),true);
+                        }
+                    }
+                } catch (ConcurrentOperationException e) {
+                    throw new CloudRuntimeException("Concurrent operations on starting router. " + e);
+                } catch (Exception ex){
+                    throw new CloudRuntimeException("Router start failed due to" + ex);
+                }finally {
+                    s_logger.info("Rebooting vm " + vm.getInstanceName());
+                    _itMgr.reboot(vm.getUuid(), null);
+                }
             }
             return _vmDao.findById(vmId);
         } else {
