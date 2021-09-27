@@ -805,6 +805,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         VirtualMachineTemplate rootDiskTmplt = _entityMgr.findById(VirtualMachineTemplate.class, vm.getTemplateId());
         DataCenter dcVO = _entityMgr.findById(DataCenter.class, vm.getDataCenterId());
         Pod pod = _entityMgr.findById(Pod.class, storagePool.getPodId());
+        s_logger.debug("createVolumeOnPrimaryStorage has storage pool with pod id: " + storagePool.getPodId());
 
         ServiceOffering svo = _entityMgr.findById(ServiceOffering.class, vm.getServiceOfferingId());
         DiskOffering diskVO = _entityMgr.findById(DiskOffering.class, volume.getDiskOfferingId());

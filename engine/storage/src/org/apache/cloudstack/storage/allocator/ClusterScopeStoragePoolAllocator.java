@@ -50,6 +50,7 @@ public class ClusterScopeStoragePoolAllocator extends AbstractStoragePoolAllocat
 
         if (dskCh.useLocalStorage()) {
             // cluster wide allocator should bail out in case of local disk
+            s_logger.debug("ClusterScopeStoragePoolAllocator found useLocalStorage, so returning");
             return null;
         }
 
@@ -64,6 +65,7 @@ public class ClusterScopeStoragePoolAllocator extends AbstractStoragePoolAllocat
             // clusterId == null here because it will break ClusterWide primary
             // storage volume operation where
             // only podId is passed into this call.
+            s_logger.debug("ClusterScopeStoragePoolAllocator found a null podId, so returning");
             return null;
         }
         if (dskCh.getTags() != null && dskCh.getTags().length != 0) {
