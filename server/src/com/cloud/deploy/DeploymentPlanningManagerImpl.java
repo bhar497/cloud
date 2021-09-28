@@ -554,7 +554,6 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
      * Adds disabled resources (Data centers, Pods, Clusters) to exclude list (avoid) in case of disabled state.
      */
     public void avoidDisabledResources(DataCenter dc, ExcludeList avoids) {
-        avoidDisabledDataCenters(dc, avoids);
         avoidDisabledPods(dc, avoids);
         avoidDisabledClusters(dc, avoids);
     }
@@ -576,15 +575,6 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
     protected void avoidDisabledPods(DataCenter dc, ExcludeList avoids) {
         List<Long> disabledPods = _podDao.listDisabledPods(dc.getId());
         avoids.addPodList(disabledPods);
-    }
-
-    /**
-     * Adds disabled Data Centers (Zones) to the ExcludeList in order to avoid them at the deployment planner.
-     */
-    protected void avoidDisabledDataCenters(DataCenter dc, ExcludeList avoids) {
-        if (dc.getAllocationState() == Grouping.AllocationState.Disabled) {
-            avoids.addDataCenter(dc.getId());
-        }
     }
 
     @Override

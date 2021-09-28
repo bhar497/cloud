@@ -904,8 +904,19 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         }
 
         if (vm.getState() == State.Running && vm.getHostId() != null) {
-            Host host = _hostDao.findById(vm.getHostId());
-            if (host.isDisabled() && drainDisabledOnReboot.value()) {
+            boolean fullStopStart = false;
+            if (drainDisabledOnReboot.value()) {
+                Host host = _hostDao.findById(vm.getHostId());
+                Cluster cluster = _clusterDao.findById(host.getClusterId());
+                HostPodVO pod = _podDao.findById(cluster.getPodId());
+                if (host.isDisabled()
+                        || cluster.getAllocationState() == Grouping.AllocationState.Disabled
+                        || pod.getAllocationState() == Grouping.AllocationState.Disabled) {
+                    fullStopStart = true;
+                }
+            }
+
+            if (fullStopStart) {
                 s_logger.info("Performing full stop & start instead of reboot on vm " + vm.getInstanceName() + " due to host being disabled");
                 if (stopVirtualMachine(userId, vmId)) {
                     startVirtualMachine(vmId, null, null, null);
