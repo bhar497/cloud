@@ -518,7 +518,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             "allow vm to deploy on different host if vm fails to deploy on the given host ", true);
 
    private static final ConfigKey<Boolean> drainDisabledOnReboot = new ConfigKey<>("Advanced", Boolean.class, "drain.disabled.on.reboot", "false",
-            "Drain VMs running on disabled clusters during reboot", true, ConfigKey.Scope.Cluster);
+            "Drain VMs running on disabled infrastructure during reboot", true, ConfigKey.Scope.Cluster);
 
 
     @Override

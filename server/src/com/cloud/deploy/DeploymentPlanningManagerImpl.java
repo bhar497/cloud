@@ -551,7 +551,7 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
     }
 
     /**
-     * Adds disabled resources (Data centers, Pods, Clusters) to exclude list (avoid) in case of disabled state.
+     * Adds disabled resources (Pods, Clusters) to exclude list (avoid) in case of disabled state.
      */
     public void avoidDisabledResources(DataCenter dc, ExcludeList avoids) {
         avoidDisabledPods(dc, avoids);
