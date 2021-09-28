@@ -21,12 +21,8 @@ import com.cloud.exception.AffinityConflictException;
 import com.cloud.exception.InsufficientServerCapacityException;
 import com.cloud.utils.component.Manager;
 import com.cloud.vm.VirtualMachineProfile;
-import org.apache.cloudstack.framework.config.ConfigKey;
 
 public interface DeploymentPlanningManager extends Manager {
-
-    ConfigKey<Boolean> drainDisabledClusters = new ConfigKey<>("Advanced", Boolean.class, "drain.disabled.clusters", "false",
-            "Drain VMs on disabled Clusters", true, ConfigKey.Scope.Cluster);
 
     /**
      * Manages vm deployment stages: First Process Affinity/Anti-affinity - Call

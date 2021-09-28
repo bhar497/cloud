@@ -33,8 +33,6 @@ import javax.naming.ConfigurationException;
 import com.cloud.utils.db.Filter;
 import com.cloud.utils.fsm.StateMachine2;
 
-import org.apache.cloudstack.framework.config.ConfigKey;
-import org.apache.cloudstack.framework.config.Configurable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.apache.cloudstack.affinity.AffinityGroupProcessor;
@@ -137,7 +135,7 @@ import com.cloud.vm.dao.UserVmDao;
 import com.cloud.vm.dao.VMInstanceDao;
 
 public class DeploymentPlanningManagerImpl extends ManagerBase implements DeploymentPlanningManager, Manager, Listener,
-StateListener<State, VirtualMachine.Event, VirtualMachine>, Configurable {
+StateListener<State, VirtualMachine.Event, VirtualMachine> {
 
     private static final Logger s_logger = Logger.getLogger(DeploymentPlanningManagerImpl.class);
     @Inject
@@ -274,7 +272,6 @@ StateListener<State, VirtualMachine.Event, VirtualMachine>, Configurable {
 
         String haVmTag = (String)vmProfile.getParameter(VirtualMachineProfile.Param.HaTag);
 
-        // TODO: Nate - Add disabled clusters to avoid like in https://github.com/apache/cloudstack/commit/a3cdd1f836e40a4b4444af738780a337ee7aac1d#diff-beeb19d6661bbc4797c3a37da7b55d964ba344ff2af6d6ec495d16697c11fc99R293
         avoidDisabledResources(dc, avoids);
 
         if (plan.getHostId() != null && haVmTag == null) {
@@ -1656,15 +1653,5 @@ StateListener<State, VirtualMachine.Event, VirtualMachine>, Configurable {
         _reservationDao.expunge(sc);
       }
       return true;
-    }
-
-    @Override
-    public ConfigKey<?>[] getConfigKeys() {
-        return new ConfigKey<?>[] {drainDisabledClusters};
-    }
-
-    @Override
-    public String getConfigComponentName() {
-        return DeploymentPlanningManager.class.getSimpleName();
     }
 }
