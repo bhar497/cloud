@@ -905,8 +905,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         if (vm.getState() == State.Running && vm.getHostId() != null) {
             boolean fullStopStart = false;
-            if (drainDisabledOnReboot.value()) {
-                Host host = _hostDao.findById(vm.getHostId());
+            Host host = _hostDao.findById(vm.getHostId());
+            if (drainDisabledOnReboot.valueIn(host.getClusterId())) {
                 Cluster cluster = _clusterDao.findById(host.getClusterId());
                 HostPodVO pod = _podDao.findById(cluster.getPodId());
                 if (host.isDisabled()
