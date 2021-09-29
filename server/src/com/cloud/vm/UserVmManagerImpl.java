@@ -520,9 +520,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     private static final ConfigKey<Boolean> AllowDeployVmIfGivenHostFails = new ConfigKey<Boolean>("Advanced", Boolean.class, "allow.deploy.vm.if.deploy.on.given.host.fails", "false",
             "allow vm to deploy on different host if vm fails to deploy on the given host ", true);
 
-   private static final ConfigKey<Boolean> drainDisabledOnReboot = new ConfigKey<>("Advanced", Boolean.class, "drain.disabled.on.reboot", "false",
-            "Drain VMs running on disabled infrastructure during reboot", true, ConfigKey.Scope.Cluster);
-
 
     @Override
     public UserVmVO getVirtualMachine(long vmId) {
@@ -6424,7 +6421,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     @Override
     public ConfigKey<?>[] getConfigKeys() {
         return new ConfigKey<?>[] {EnableDynamicallyScaleVm, AllowUserExpungeRecoverVm, VmIpFetchWaitInterval, VmIpFetchTrialMax, VmIpFetchThreadPoolMax,
-            VmIpFetchTaskWorkers, AllowDeployVmIfGivenHostFails, drainDisabledOnReboot};
+            VmIpFetchTaskWorkers, AllowDeployVmIfGivenHostFails};
     }
 
     @Override
