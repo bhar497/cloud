@@ -72,6 +72,7 @@ import org.apache.cloudstack.api.command.user.vm.UpgradeVMCmd;
 import org.apache.cloudstack.api.command.user.vmgroup.CreateVMGroupCmd;
 import org.apache.cloudstack.api.command.user.vmgroup.DeleteVMGroupCmd;
 import org.apache.cloudstack.api.command.user.volume.ResizeVolumeCmd;
+import org.apache.cloudstack.cluster.ClusterDrainingManager;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.engine.cloud.entity.api.VirtualMachineEntity;
 import org.apache.cloudstack.engine.cloud.entity.api.db.dao.VMNetworkMapDao;
@@ -475,6 +476,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     private TemplateApiService _tmplService;
     @Inject
     private ConfigurationDao _configDao;
+    @Inject
+    protected ClusterDrainingManager _clusterDrainingManager;
 
     private ScheduledExecutorService _executor = null;
     private ScheduledExecutorService _vmIpFetchExecutor = null;
@@ -904,20 +907,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         }
 
         if (vm.getState() == State.Running && vm.getHostId() != null) {
-            boolean fullStopStart = false;
-            Host host = _hostDao.findById(vm.getHostId());
-            if (drainDisabledOnReboot.valueIn(host.getClusterId())) {
-                Cluster cluster = _clusterDao.findById(host.getClusterId());
-                HostPodVO pod = _podDao.findById(cluster.getPodId());
-                if (host.isDisabled()
-                        || cluster.getAllocationState() == Grouping.AllocationState.Disabled
-                        || pod.getAllocationState() == Grouping.AllocationState.Disabled) {
-                    fullStopStart = true;
-                }
-            }
-
-            if (fullStopStart) {
-                s_logger.info("Performing full stop & start instead of reboot on vm " + vm.getInstanceName() + " due to host being disabled");
+            if (_clusterDrainingManager.shouldDrainHost(vm.getHostId())) {
+                s_logger.info("Performing full stop & start instead of reboot on vm " + vm.getInstanceName() + " due to cluster draining");
                 if (stopVirtualMachine(userId, vmId)) {
                     startVirtualMachine(vmId, null, null, null);
                 }

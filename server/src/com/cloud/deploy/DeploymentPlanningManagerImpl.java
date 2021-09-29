@@ -33,6 +33,7 @@ import javax.naming.ConfigurationException;
 import com.cloud.utils.db.Filter;
 import com.cloud.utils.fsm.StateMachine2;
 
+import org.apache.cloudstack.cluster.ClusterDrainingManager;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.apache.cloudstack.affinity.AffinityGroupProcessor;
@@ -163,6 +164,8 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
     private long _hostReservationReleasePeriod = 60L * 60L * 1000L; // one hour by default
     @Inject
     protected VMReservationDao _reservationDao;
+    @Inject
+    protected ClusterDrainingManager _clusterDrainingManager;
 
     private static final long INITIAL_RESERVATION_RELEASE_CHECKER_DELAY = 30L * 1000L; // thirty seconds expressed in milliseconds
     protected long _nodeId = -1;
@@ -272,7 +275,7 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
 
         String haVmTag = (String)vmProfile.getParameter(VirtualMachineProfile.Param.HaTag);
 
-        avoidDisabledResources(dc, avoids);
+        _clusterDrainingManager.addDrainingToAvoids(dc, avoids);
 
         if (plan.getHostId() != null && haVmTag == null) {
             Long hostIdSpecified = plan.getHostId();
@@ -548,33 +551,6 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
         }
 
         return dest;
-    }
-
-    /**
-     * Adds disabled resources (Pods, Clusters) to exclude list (avoid) in case of disabled state.
-     */
-    public void avoidDisabledResources(DataCenter dc, ExcludeList avoids) {
-        avoidDisabledPods(dc, avoids);
-        avoidDisabledClusters(dc, avoids);
-    }
-
-    /**
-     * Adds disabled Clusters to the ExcludeList in order to avoid them at the deployment planner.
-     */
-    protected void avoidDisabledClusters(DataCenter dc, ExcludeList avoids) {
-        List<Long> pods = _podDao.listAllPods(dc.getId());
-        for (Long podId : pods) {
-            List<Long> disabledClusters = _clusterDao.listDisabledClusters(dc.getId(), podId);
-            avoids.addClusterList(disabledClusters);
-        }
-    }
-
-    /**
-     * Adds disabled Pods to the ExcludeList in order to avoid them at the deployment planner.
-     */
-    protected void avoidDisabledPods(DataCenter dc, ExcludeList avoids) {
-        List<Long> disabledPods = _podDao.listDisabledPods(dc.getId());
-        avoids.addPodList(disabledPods);
     }
 
     @Override
