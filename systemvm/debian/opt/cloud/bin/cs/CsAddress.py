@@ -496,7 +496,7 @@ class CsIP:
                 ["", "front", "-A FORWARD -j NETWORK_STATS_FILTER_%s" % self.dev])
             self.add_stats_exclusions("NETWORK_STATS_FILTER_%s" % self.dev)
             self.fw.append(
-                ["", "front", "-A NETWORK_STATS_FILTER_%s -j NETWORK_STATS_%s" % (self.dev, self.dev)])
+                ["", "", "-A NETWORK_STATS_FILTER_%s -j NETWORK_STATS_%s" % (self.dev, self.dev)])
 
         self.fw.append(["", "front", "-A FORWARD -j NETWORK_STATS_FILTER"])
         self.fw.append(["", "front", "-A INPUT -j NETWORK_STATS_FILTER"])
