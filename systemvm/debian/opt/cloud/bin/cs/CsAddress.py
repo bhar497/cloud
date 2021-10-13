@@ -422,9 +422,13 @@ class CsIP:
             self.fw.append(
                 ["filter", "", "-A FORWARD -i eth0 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT"])
 
-        self.fw.append(['', 'front', '-A FORWARD -j NETWORK_STATS'])
-        self.fw.append(['', 'front', '-A INPUT -j NETWORK_STATS'])
-        self.fw.append(['', 'front', '-A OUTPUT -j NETWORK_STATS'])
+        self.fw.append(['', 'front', '-A FORWARD -j NETWORK_STATS_FILTER'])
+        self.fw.append(['', 'front', '-A INPUT -j NETWORK_STATS_FILTER'])
+        self.fw.append(['', 'front', '-A OUTPUT -j NETWORK_STATS_FILTER'])
+
+        self.fw.append(['', '', '-A NETWORK_STATS_FILTER -s 10.1.133.211 -j RETURN'])
+        self.fw.append(['', '', '-A NETWORK_STATS_FILTER -j NETWORK_STATS'])
+
         self.fw.append(['', '', '-A NETWORK_STATS -i eth0 -o eth2'])
         self.fw.append(['', '', '-A NETWORK_STATS -i eth2 -o eth0'])
         self.fw.append(['', '', '-A NETWORK_STATS -o eth2 ! -i eth0 -p tcp'])
@@ -489,11 +493,16 @@ class CsIP:
             self.fw.append(
                 ["mangle", "", "-A VPN_STATS_%s -i %s -m mark --mark 0x524/0xffffffff" % (self.dev, self.dev)])
             self.fw.append(
-                ["", "front", "-A FORWARD -j NETWORK_STATS_%s" % self.dev])
+                ["", "front", "-A FORWARD -j NETWORK_STATS_FILTER_%s" % self.dev])
+            self.fw.append(
+                ["", "front", "-A NETWORK_STATS_FILTER_%s -j NETWORK_STATS_%s" % (self.dev, self.dev)])
 
-        self.fw.append(["", "front", "-A FORWARD -j NETWORK_STATS"])
-        self.fw.append(["", "front", "-A INPUT -j NETWORK_STATS"])
-        self.fw.append(["", "front", "-A OUTPUT -j NETWORK_STATS"])
+        self.fw.append(["", "front", "-A FORWARD -j NETWORK_STATS_FILTER"])
+        self.fw.append(["", "front", "-A INPUT -j NETWORK_STATS_FILTER"])
+        self.fw.append(["", "front", "-A OUTPUT -j NETWORK_STATS_FILTER"])
+
+        self.fw.append(['', '', '-A NETWORK_STATS_FILTER -s 10.1.133.211 -j RETURN'])
+        self.fw.append(['', '', '-A NETWORK_STATS_FILTER -j NETWORK_STATS'])
 
         self.fw.append(["", "", "-A NETWORK_STATS -i eth0 -o eth2 -p tcp"])
         self.fw.append(["", "", "-A NETWORK_STATS -i eth2 -o eth0 -p tcp"])
