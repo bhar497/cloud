@@ -426,7 +426,7 @@ class CsIP:
         self.fw.append(['', 'front', '-A INPUT -j NETWORK_STATS_FILTER'])
         self.fw.append(['', 'front', '-A OUTPUT -j NETWORK_STATS_FILTER'])
 
-        self.fw.append(['', '', '-A NETWORK_STATS_FILTER -s 10.1.133.211 -j RETURN'])
+        self.fw.append(['', 'front', '-A NETWORK_STATS_FILTER -s 10.1.133.211 -j RETURN'])
         self.fw.append(['', '', '-A NETWORK_STATS_FILTER -j NETWORK_STATS'])
 
         self.fw.append(['', '', '-A NETWORK_STATS -i eth0 -o eth2'])
@@ -501,7 +501,7 @@ class CsIP:
         self.fw.append(["", "front", "-A INPUT -j NETWORK_STATS_FILTER"])
         self.fw.append(["", "front", "-A OUTPUT -j NETWORK_STATS_FILTER"])
 
-        self.fw.append(['', '', '-A NETWORK_STATS_FILTER -s 10.1.133.211 -j RETURN'])
+        self.fw.append(['', 'front', '-A NETWORK_STATS_FILTER -s 10.1.133.211 -j RETURN'])
         self.fw.append(['', '', '-A NETWORK_STATS_FILTER -j NETWORK_STATS'])
 
         self.fw.append(["", "", "-A NETWORK_STATS -i eth0 -o eth2 -p tcp"])
