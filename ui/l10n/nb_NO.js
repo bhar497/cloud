@@ -474,7 +474,7 @@ var dictionary = {
     "label.blade.id": "Blad-ID",
     "label.blades": "Blad",
     "label.bootable": "Botbar",
-    "label.bootDelay": "Boot Delay",
+    "label.bootDelay": "Boot Delay Seconds",
     "label.broadcast.domain.range": "Kringkastings domene rekke",
     "label.broadcast.domain.type": "Kringkastings Domene Type",
     "label.broadcast.uri": "Kringkastings URI",

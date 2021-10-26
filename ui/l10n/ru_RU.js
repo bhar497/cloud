@@ -474,7 +474,7 @@ var dictionary = {
     "label.blade.id": "Blade ID",
     "label.blades": "Blades",
     "label.bootable": "Загружаемый",
-    "label.bootDelay": "Boot Delay",
+    "label.bootDelay": "Boot Delay Seconds",
     "label.broadcast.domain.range": "Диапазон широковещательного домена",
     "label.broadcast.domain.type": "Тип широковещательного домена",
     "label.broadcast.uri": "Широковещательный URI",

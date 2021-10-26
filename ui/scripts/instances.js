@@ -747,9 +747,32 @@
                 actions: {
                     start: {
                         label: 'label.action.start.instance',
+                        createForm: {
+                            title: 'label.action.start.instance',
+                            desc: 'message.action.start.instance',
+                            fields: {
+                                bootDelay: {
+                                    label: 'label.bootDelay',
+                                    validation: {
+                                        required: false,
+                                        number: true
+                                    },
+                                    defaultValue: '0'
+                                }
+                            }
+                        },
                         action: function(args) {
+                            var data = {
+                                id: args.context.instances[0].id
+                            }
+                            if (args.data.bootDelay != 0) {
+                                $.extend(data, {
+                                    bootDelay: args.data.bootDelay
+                                });
+                            }
                             $.ajax({
-                                url: createURL("startVirtualMachine&id=" + args.context.instances[0].id),
+                                url: createURL("startVirtualMachine"),
+                                data: data,
                                 dataType: "json",
                                 async: true,
                                 success: function(json) {

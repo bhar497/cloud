@@ -474,7 +474,7 @@ var dictionary = {
     "label.blade.id": "ブレード ID",
     "label.blades": "ブレード",
     "label.bootable": "起動可能",
-    "label.bootDelay": "Boot Delay",
+    "label.bootDelay": "Boot Delay Seconds",
     "label.broadcast.domain.range": "ブロードキャスト ドメインの範囲",
     "label.broadcast.domain.type": "ブロードキャスト ドメインの種類",
     "label.broadcast.uri": "ブロードキャスト URI",
