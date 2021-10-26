@@ -2021,18 +2021,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
     }
 
-    private Integer getBootDelay(final VirtualMachineTO vmTO) {
-        final Map <String, String> params = vmTO.getDetails();
-        if (params != null && params.get("BootDelay") != null) {
-            try {
-                return Integer.parseInt(params.get("BootDelay"));
-            } catch (NumberFormatException e) {
-                return 0;
-            }
-        }
-        return 0;
-    }
-
     public LibvirtVMDef createVMFromSpec(final VirtualMachineTO vmTO) {
         final LibvirtVMDef vm = new LibvirtVMDef();
         vm.setDomainName(vmTO.getName());
@@ -2059,7 +2047,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         guest.setUuid(uuid);
         guest.setBootOrder(GuestDef.BootOrder.CDROM);
         guest.setBootOrder(GuestDef.BootOrder.HARDISK);
-        guest.setBootDelay(getBootDelay(vmTO));
+        guest.setBootDelay(vmTO.getBootDelay());
 
         vm.addComp(guest);
 

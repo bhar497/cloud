@@ -138,6 +138,7 @@ public class LibvirtVMDef {
                 }
                 guestDef.append("<smbios mode='sysinfo'/>\n");
                 if (_bootDelay != null && _bootDelay > 0) {
+                    s_logger.info("Delaying VM start " + this._uuid);
                     guestDef.append("<bootmenu enable='yes' timeout='" + _bootDelay * 1000 + "'/>");
                 }
                 guestDef.append("</os>\n");
