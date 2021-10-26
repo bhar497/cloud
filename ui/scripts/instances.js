@@ -836,12 +836,24 @@
                                             });
                                         }
                                     }
+                                },
+                                bootDelay: {
+                                    label: 'label.bootDelay',
+                                    validation: {
+                                        required: false,
+                                        number: true
+                                    }
                                 }
                             }
                         },
                         action: function(args) {
                             var data = {
                                 id: args.context.instances[0].id
+                            }
+                            if (args.data.bootDelay != 0) {
+                                $.extend(data, {
+                                    bootDelay: args.data.bootDelay
+                                });
                             }
                             if (args.$form.find('.form-item[rel=hostId]').css("display") != "none" && args.data.hostId != -1) {
                                 $.extend(data, {
