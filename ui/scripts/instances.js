@@ -842,7 +842,8 @@
                                     validation: {
                                         required: false,
                                         number: true
-                                    }
+                                    },
+                                    defaultValue: 0
                                 }
                             }
                         },
