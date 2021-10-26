@@ -843,7 +843,7 @@
                                         required: false,
                                         number: true
                                     },
-                                    defaultValue: 0
+                                    defaultValue: '0'
                                 }
                             }
                         },
