@@ -752,6 +752,7 @@
                             desc: 'message.action.start.instance',
                             fields: {
                                 bootDelay: {
+                                    docID: 'helpBootDelay',
                                     label: 'label.bootDelay',
                                     validation: {
                                         required: false,
@@ -862,6 +863,7 @@
                                 },
                                 bootDelay: {
                                     label: 'label.bootDelay',
+                                    docID: 'helpBootDelay',
                                     validation: {
                                         required: false,
                                         number: true
@@ -2367,7 +2369,7 @@
                                 $.extend(dataObj, {
                                     networkIds: args.data.network
                                 });
-                            } 
+                            }
                             if (args.data.securitygroup != null && args.data.securitygroup != '') {
                                 $.extend(dataObj, {
                                     securitygroupIds: args.data.securitygroup
