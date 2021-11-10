@@ -85,6 +85,7 @@ public final class LibvirtBackupSnapshotCommandWrapper extends CommandWrapper<Ba
             final String manageSnapshotPath = libvirtComputingResource.manageSnapshotPath();
             final int cmdsTimeout = libvirtComputingResource.getCmdsTimeout();
 
+            // TODO: Nate - Add new option here for NetApp
             /**
              * RBD snapshots can't be copied using qemu-img, so we have to use
              * the Java bindings for librbd here.
