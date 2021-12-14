@@ -218,7 +218,7 @@ backup_snapshot() {
 
     # Localizing this to just this branch since it is specific to our setup
     local forceSharedWrite=""
-    if qemu_img -h | grep '\[-U]' >& /dev/null
+    if $qemu_img -h | grep '\[-U]' >& /dev/null
     then
       forceSharedWrite="-U"
     fi
