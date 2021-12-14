@@ -152,6 +152,19 @@ destroy_snapshot() {
     fi
     lvm lvremove -f "${vg}/${snapshotname}-cow"
   elif [ -f $disk ]; then
+     $qemu_img snapshot -l $disk|grep -w "$snapshotname" >& /dev/null
+     if [ $? -gt 0 ]
+     then
+       printf "there is no $snapshotname on disk $disk, deleting file instead" >&2
+       local snapshotFile=`dirname $disk`/$snapshotname
+       rm $snapshotFile
+       if [ $? -gt 0 ]
+       then
+         printf "Unable to delete snapshot file ${snapshotFile}" >&2
+         return 1
+       fi
+       return 0
+     fi
      #delete all the existing snapshots
      $qemu_img snapshot -l $disk |tail -n +3|awk '{print $1}'|xargs -I {} $qemu_img snapshot -d {} $disk >&2
      if [ $? -gt 0 ]
@@ -216,11 +229,20 @@ backup_snapshot() {
 
   elif [ -f ${disk} ]; then
     # Does the snapshot exist?
+    # TODO: Nate - Make this not a failure, but a decision point. If snapshot exists, follow existing path, otherwise backup the whole file.
+    # Assume the caller knows what they are doing.
     $qemu_img snapshot -l $disk|grep -w "$snapshotname" >& /dev/null
     if [ $? -gt 0 ]
     then
-      printf "there is no $snapshotname on disk $disk\n" >&2
-      return 1
+      printf "there is no $snapshotname on disk $disk, copying file instead" >&2
+      local snapshotFile=`dirname $disk`/$snapshotname
+      cp $snapshotFile $destPath/$destName
+      if [ $? -gt 0 ]
+      then
+        printf "Unable to copy snapshot file ${snapshotFile}" >&2
+        return 1
+      fi
+      return 0
     fi
 
     $qemu_img convert -f qcow2 -O qcow2 -s $snapshotname $disk $destPath/$destName >& /dev/null
