@@ -60,12 +60,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class NetAppPrimaryDataStoreLifeCycleImplTest {
+public class DebugPrimaryDataStoreLifeCycleImplTest {
 
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
     @InjectMocks
-    PrimaryDataStoreLifeCycle _netAppPrimaryDataStoreLifeCycle = new NetAppPrimaryDataStoreLifeCycleImpl();
+    PrimaryDataStoreLifeCycle _debugPrimaryDataStoreLifeCycle = new DebugPrimaryDataStoreLifeCycleImpl();
     @Spy
     @InjectMocks
     StorageManager storageMgr = new StorageManagerImpl();
@@ -141,7 +141,7 @@ public class NetAppPrimaryDataStoreLifeCycleImplTest {
 
     @Test
     public void testAttachCluster() throws Exception {
-        _netAppPrimaryDataStoreLifeCycle.attachCluster(store, new ClusterScope(1L, 1L, 1L));
+        _debugPrimaryDataStoreLifeCycle.attachCluster(store, new ClusterScope(1L, 1L, 1L));
         verify(storagePoolHostDao, times(2)).persist(Mockito.any(StoragePoolHostVO.class));
 
     }
@@ -256,7 +256,7 @@ public class NetAppPrimaryDataStoreLifeCycleImplTest {
     }
 
     private DataStore initialize(DsInfoBuilder valid) {
-        return _netAppPrimaryDataStoreLifeCycle.initialize(valid.b());
+        return _debugPrimaryDataStoreLifeCycle.initialize(valid.b());
     }
 
     private PrimaryDataStoreParameters verifyCreateParams() {

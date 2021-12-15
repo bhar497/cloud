@@ -11,7 +11,7 @@ import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.UUID;
 
-public class NetAppPrimaryDataStoreLifeCycleImpl extends CloudStackPrimaryDataStoreLifeCycleImpl {
+public class DebugPrimaryDataStoreLifeCycleImpl extends CloudStackPrimaryDataStoreLifeCycleImpl {
 
     @SuppressWarnings("unchecked")
     @Override

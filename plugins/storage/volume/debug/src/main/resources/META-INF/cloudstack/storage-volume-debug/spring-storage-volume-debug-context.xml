@@ -9,8 +9,8 @@
                       http://www.springframework.org/schema/context/spring-context.xsd"
 >
 
-    <bean id="netappPrimaryDataStoreProviderImpl"
-          class="org.apache.cloudstack.storage.datastore.provider.NetAppPrimaryDataStoreProviderImpl" />
+    <bean id="debugPrimaryDataStoreProviderImpl"
+          class="org.apache.cloudstack.storage.datastore.provider.DebugPrimaryDataStoreProviderImpl" />
 
 
 

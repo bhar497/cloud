@@ -182,7 +182,6 @@ public class LibvirtStoragePool implements KVMStoragePool {
     }
 
     @Override
-    // TODO: Nate - new storage will be external snapshots I think.
     public boolean isExternalSnapshot() {
         if (this.type == StoragePoolType.CLVM || type == StoragePoolType.RBD) {
             return true;

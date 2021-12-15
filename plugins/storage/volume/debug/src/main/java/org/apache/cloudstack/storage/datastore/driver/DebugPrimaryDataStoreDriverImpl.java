@@ -24,8 +24,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NetAppPrimaryDataStoreDriverImpl extends CloudStackPrimaryDataStoreDriverImpl {
-    private static final Logger LOGGER = Logger.getLogger(NetAppPrimaryDataStoreDriverImpl.class);
+public class DebugPrimaryDataStoreDriverImpl extends CloudStackPrimaryDataStoreDriverImpl {
+    private static final Logger LOGGER = Logger.getLogger(DebugPrimaryDataStoreDriverImpl.class);
 
     @Inject
     private PrimaryDataStoreDao storagePoolDao;
@@ -58,6 +58,7 @@ public class NetAppPrimaryDataStoreDriverImpl extends CloudStackPrimaryDataStore
         String volumePath = volumeInfo.getPath();
         String snapshotPath = volumePath + "-" + snapshot.getUuid();
 
+        // File operations
         File volumeFile = new File(path, volumePath);
         File snapshotFile = new File(path, snapshotPath);
 
@@ -67,6 +68,7 @@ public class NetAppPrimaryDataStoreDriverImpl extends CloudStackPrimaryDataStore
         command.add(volumeFile.getAbsolutePath());
         command.add(snapshotFile.getAbsolutePath());
         String cmdResult = command.execute();
+        // End file operations
 
         LOGGER.info("Copy returned with exit code: " + command.getExitValue());
 

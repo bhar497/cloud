@@ -101,7 +101,6 @@ public final class LibvirtManageSnapshotCommandWrapper extends CommandWrapper<Ma
                     vm.resume();
                 }
             } else {
-                // TODO: Nate - Add new option here for NetApp
                 /**
                  * For RBD we can't use libvirt to do our snapshotting or any Bash scripts.
                  * libvirt also wants to store the memory contents of the Virtual Machine,

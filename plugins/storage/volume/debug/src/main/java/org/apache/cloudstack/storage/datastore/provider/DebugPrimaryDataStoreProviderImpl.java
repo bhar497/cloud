@@ -5,20 +5,20 @@ import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreLifeCycle;
 import org.apache.cloudstack.engine.subsystem.api.storage.HypervisorHostListener;
 import org.apache.cloudstack.engine.subsystem.api.storage.PrimaryDataStoreDriver;
 import org.apache.cloudstack.engine.subsystem.api.storage.PrimaryDataStoreProvider;
-import org.apache.cloudstack.storage.datastore.driver.NetAppPrimaryDataStoreDriverImpl;
-import org.apache.cloudstack.storage.datastore.lifecycle.NetAppPrimaryDataStoreLifeCycleImpl;
+import org.apache.cloudstack.storage.datastore.driver.DebugPrimaryDataStoreDriverImpl;
+import org.apache.cloudstack.storage.datastore.lifecycle.DebugPrimaryDataStoreLifeCycleImpl;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class NetAppPrimaryDataStoreProviderImpl implements PrimaryDataStoreProvider {
+public class DebugPrimaryDataStoreProviderImpl implements PrimaryDataStoreProvider {
 
     protected PrimaryDataStoreDriver driver;
     protected HypervisorHostListener listener;
     protected DataStoreLifeCycle lifecycle;
 
-    NetAppPrimaryDataStoreProviderImpl() {
+    DebugPrimaryDataStoreProviderImpl() {
     }
 
     @Override
@@ -33,8 +33,8 @@ public class NetAppPrimaryDataStoreProviderImpl implements PrimaryDataStoreProvi
 
     @Override
     public boolean configure(Map<String, Object> params) {
-        lifecycle = ComponentContext.inject(NetAppPrimaryDataStoreLifeCycleImpl.class);
-        driver = ComponentContext.inject(NetAppPrimaryDataStoreDriverImpl.class);
+        lifecycle = ComponentContext.inject(DebugPrimaryDataStoreLifeCycleImpl.class);
+        driver = ComponentContext.inject(DebugPrimaryDataStoreDriverImpl.class);
         listener = ComponentContext.inject(DefaultHostListener.class);
         return true;
     }
