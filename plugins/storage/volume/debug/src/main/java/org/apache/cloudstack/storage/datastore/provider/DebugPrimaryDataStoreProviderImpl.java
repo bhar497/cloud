@@ -23,7 +23,7 @@ public class DebugPrimaryDataStoreProviderImpl implements PrimaryDataStoreProvid
 
     @Override
     public String getName() {
-        return "NetApp Primary";
+        return "Debugging Primary";
     }
 
     @Override

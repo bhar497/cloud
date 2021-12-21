@@ -57,6 +57,7 @@ public class DebugPrimaryDataStoreLifeCycleImpl extends CloudStackPrimaryDataSto
         params.setHost(uriHost);
         params.setPath(uriPath);
         params.setPort(2049);
+        params.setName((String)dsInfos.get("name"));
         String existingUuid = (String) dsInfos.get("uuid");
         String uuid;
 

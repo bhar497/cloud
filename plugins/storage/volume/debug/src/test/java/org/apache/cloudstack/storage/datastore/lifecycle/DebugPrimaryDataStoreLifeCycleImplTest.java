@@ -248,7 +248,7 @@ public class DebugPrimaryDataStoreLifeCycleImplTest {
     @Test
     public void testProviderNameIsPassed() {
         validInitialize();
-        assertEquals("NetApp", verifyCreateParams().getProviderName());
+        assertEquals("Debugging", verifyCreateParams().getProviderName());
     }
 
     private DataStore validInitialize() {
@@ -378,7 +378,7 @@ public class DebugPrimaryDataStoreLifeCycleImplTest {
         }
 
         DsInfoBuilder validProviderName() {
-            this.providerName = "NetApp";
+            this.providerName = "Debugging";
             return this;
         }
     }
