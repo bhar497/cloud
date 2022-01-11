@@ -165,8 +165,8 @@ destroy_snapshot() {
        fi
        return 0
      fi
-     #delete all the existing snapshots
-     $qemu_img snapshot -l $disk |tail -n +3|awk '{print $1}'|xargs -I {} $qemu_img snapshot -d {} $disk >&2
+     #delete all the existing disk snapshots
+     $qemu_img snapshot -l $disk |tail -n +3| grep -i '[0-9a-z]\{8\}-[0-9a-z]\{4\}' | awk '{print $1}'|xargs -I {} $qemu_img snapshot -d {} $disk >&2
      if [ $? -gt 0 ]
      then
        failed=2
@@ -228,10 +228,18 @@ backup_snapshot() {
      ( printf "${qemu_img} failed to create backup of snapshot ${snapshotname} for disk ${disk} to ${destPath}.\n" >&2; return 2 )
 
   elif [ -f ${disk} ]; then
+
+    # Localizing this to just this branch since it is specific to our setup
+    local forceSharedWrite=""
+    if $qemu_img -h | grep '\[-U]' >& /dev/null
+    then
+      forceSharedWrite="-U"
+    fi
+
     # Does the snapshot exist?
     # TODO: Nate - Make this not a failure, but a decision point. If snapshot exists, follow existing path, otherwise backup the whole file.
     # Assume the caller knows what they are doing.
-    $qemu_img snapshot -l $disk|grep -w "$snapshotname" >& /dev/null
+    $qemu_img snapshot $forceSharedWrite -l $disk|grep -w "$snapshotname" >& /dev/null
     if [ $? -gt 0 ]
     then
       printf "there is no $snapshotname on disk $disk, copying file instead" >&2
@@ -245,7 +253,7 @@ backup_snapshot() {
       return 0
     fi
 
-    $qemu_img convert -f qcow2 -O qcow2 -s $snapshotname $disk $destPath/$destName >& /dev/null
+    $qemu_img convert $forceSharedWrite -f qcow2 -O qcow2 -s $snapshotname $disk $destPath/$destName >& /dev/null
     if [ $? -gt 0 ]
     then
       printf "Failed to backup $snapshotname for disk $disk to $destPath\n" >&2
