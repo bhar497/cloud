@@ -152,10 +152,8 @@ destroy_snapshot() {
     fi
     lvm lvremove -f "${vg}/${snapshotname}-cow"
   elif [ -f $disk ]; then
-     $qemu_img snapshot -l $disk|grep -w "$snapshotname" >& /dev/null
-     if [ $? -gt 0 ]
+     if [[ $snapshotname =~ .*-snapshot-.* ]]
      then
-       printf "there is no $snapshotname on disk $disk, deleting file instead" >&2
        local snapshotFile=`dirname $disk`/$snapshotname
        rm $snapshotFile
        if [ $? -gt 0 ]
@@ -236,13 +234,9 @@ backup_snapshot() {
       forceSharedWrite="-U"
     fi
 
-    # Does the snapshot exist?
-    # TODO: Nate - Make this not a failure, but a decision point. If snapshot exists, follow existing path, otherwise backup the whole file.
-    # Assume the caller knows what they are doing.
-    $qemu_img snapshot $forceSharedWrite -l $disk|grep -w "$snapshotname" >& /dev/null
-    if [ $? -gt 0 ]
+    # Is the snapshot a whole file clone?
+    if [[ $snapshotname =~ .*-snapshot-.* ]]
     then
-      printf "there is no $snapshotname on disk $disk, copying file instead" >&2
       local snapshotFile=`dirname $disk`/$snapshotname
       cp $snapshotFile $destPath/$destName
       if [ $? -gt 0 ]
@@ -251,6 +245,14 @@ backup_snapshot() {
         return 1
       fi
       return 0
+    fi
+
+    # Does the snapshot exist in the disk image?
+    $qemu_img snapshot $forceSharedWrite -l $disk|grep -w "$snapshotname" >& /dev/null
+    if [ $? -gt 0 ]
+    then
+      printf "there is no $snapshotname on disk $disk\n" >&2
+      return 1
     fi
 
     $qemu_img convert $forceSharedWrite -f qcow2 -O qcow2 -s $snapshotname $disk $destPath/$destName >& /dev/null
