@@ -994,7 +994,14 @@ public class KVMStorageProcessor implements StorageProcessor {
 
                     final KVMStoragePool primaryStorage = storagePoolMgr.getStoragePool(primaryStore.getPoolType(),
                             primaryStore.getUuid());
-                    if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryStorage.isExternalSnapshot()) {
+                    // Check to see if the snapshotName contains '-snapshot-', if so, just blow away the file
+                    if (snapshotName.contains("-snapshot-")) {
+                        File snapshotFile = new File(primaryStorage.getLocalPath(), snapshotName);
+                        s_logger.info("Snapshot is nfs file based: " + snapshotFile.getPath());
+                        if (!snapshotFile.delete()) {
+                            s_logger.error("Failed to delete snapshot on primary");
+                        }
+                    } else if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryStorage.isExternalSnapshot()) {
                         final DomainSnapshot snap = vm.snapshotLookupByName(snapshotName);
                         try {
                             vm.suspend();
