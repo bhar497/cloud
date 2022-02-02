@@ -247,6 +247,14 @@ backup_snapshot() {
       return 0
     fi
 
+    # Does the snapshot exist?
+    $qemu_img snapshot $forceSharedWrite -l $disk|grep -w "$snapshotname" >& /dev/null
+    if [ $? -gt 0 ]
+    then
+      printf "there is no $snapshotname on disk $disk\n" >&2
+      return 1
+    fi
+
     $qemu_img convert $forceSharedWrite -f qcow2 -O qcow2 -s $snapshotname $disk $destPath/$destName >& /dev/null
     if [ $? -gt 0 ]
     then
