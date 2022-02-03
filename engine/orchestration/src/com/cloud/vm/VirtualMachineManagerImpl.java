@@ -385,6 +385,9 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
     static final ConfigKey<Boolean> HaVmRestartHostUp = new ConfigKey<Boolean>("Advanced", Boolean.class, "ha.vm.restart.hostup", "true",
             "If an out-of-band stop of a VM is detected and its host is up, then power on the VM", true);
 
+    static final ConfigKey<Boolean> StopIfUnableToMigrate = new ConfigKey<>("Advanced", Boolean.class, "vm.stop.on.failed.migrate", "true",
+            "If the host maintenance process is unable to migrate the VM, force stop it to enable maintenance to proceed.", true);
+
     ScheduledExecutorService _executor = null;
 
     protected long _nodeId;
@@ -2757,18 +2760,22 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                 s_logger.debug("Unable to migrate VM due to: " + e.getMessage());
             }
 
-            try {
-                advanceStop(vmUuid, true);
-                throw new CloudRuntimeException("Unable to migrate " + vm);
-            } catch (final ResourceUnavailableException e) {
-                s_logger.debug("Unable to stop VM due to " + e.getMessage());
-                throw new CloudRuntimeException("Unable to migrate " + vm);
-            } catch (final ConcurrentOperationException e) {
-                s_logger.debug("Unable to stop VM due to " + e.getMessage());
-                throw new CloudRuntimeException("Unable to migrate " + vm);
-            } catch (final OperationTimedoutException e) {
-                s_logger.debug("Unable to stop VM due to " + e.getMessage());
-                throw new CloudRuntimeException("Unable to migrate " + vm);
+            if (StopIfUnableToMigrate.value()) {
+                try {
+                    advanceStop(vmUuid, true);
+                    throw new CloudRuntimeException("Unable to migrate " + vm);
+                } catch (final ResourceUnavailableException e) {
+                    s_logger.debug("Unable to stop VM due to " + e.getMessage());
+                    throw new CloudRuntimeException("Unable to migrate " + vm);
+                } catch (final ConcurrentOperationException e) {
+                    s_logger.debug("Unable to stop VM due to " + e.getMessage());
+                    throw new CloudRuntimeException("Unable to migrate " + vm);
+                } catch (final OperationTimedoutException e) {
+                    s_logger.debug("Unable to stop VM due to " + e.getMessage());
+                    throw new CloudRuntimeException("Unable to migrate " + vm);
+                }
+            } else {
+                throw new CloudRuntimeException("Unable to migrate VM: " + vm.getId());
             }
         }
     }
@@ -4025,8 +4032,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
     @Override
     public ConfigKey<?>[] getConfigKeys() {
         return new ConfigKey<?>[] {ClusterDeltaSyncInterval, StartRetry, VmDestroyForcestop, VmOpCancelInterval, VmOpCleanupInterval, VmOpCleanupWait,
-                VmOpLockStateRetry,
-                VmOpWaitInterval, ExecuteInSequence, VmJobCheckInterval, VmJobTimeout, VmJobStateReportInterval, VmConfigDriveLabel, VmConfigDriveOnPrimaryPool, HaVmRestartHostUp};
+                VmOpLockStateRetry, VmOpWaitInterval, ExecuteInSequence, VmJobCheckInterval, VmJobTimeout, VmJobStateReportInterval, VmConfigDriveLabel,
+                VmConfigDriveOnPrimaryPool, HaVmRestartHostUp, StopIfUnableToMigrate};
     }
 
     public List<StoragePoolAllocator> getStoragePoolAllocators() {
