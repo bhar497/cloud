@@ -1638,7 +1638,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
 
         final Domain vm = getDomain(conn, vmName);
-        vm.attachDevice(getVifDriver(nicTO.getType()).plug(nicTO, "Other PV", "").toString());
+        InterfaceDef nic = getVifDriver(nicTO.getType()).plug(nicTO, "Other PV", "");
+        nic.setQueues(vm.getMaxVcpus());
+        vm.attachDevice(nic.toString());
     }
 
 
