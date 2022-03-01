@@ -1153,7 +1153,7 @@ public class LibvirtVMDef {
             if (_slot  != null) {
                 netBuilder.append(String.format("<address type='pci' domain='0x0000' bus='0x00' slot='0x%02x' function='0x0'/>\n", _slot));
             }
-            if (queues > 0) {
+            if (_model == NicModel.VIRTIO && queues > 0) {
                 netBuilder.append(String.format("<driver queues='%d'/>\n", queues));
             }
             netBuilder.append("</interface>\n");
