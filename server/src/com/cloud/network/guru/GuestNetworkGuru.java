@@ -443,6 +443,10 @@ public abstract class GuestNetworkGuru extends AdapterBase implements NetworkGur
 
     @Override
     public boolean trash(final Network network, final NetworkOffering offering) {
+        if (offering.getSpecifyVlan() && network.getBroadcastDomainType() == BroadcastDomainType.Vlan) {
+            s_logger.info("Cleaning up our manually assigned vlan from table");
+            _dcDao.releaseVnet(BroadcastDomainType.getValue(network.getBroadcastUri()), network.getDataCenterId(), network.getPhysicalNetworkId(), network.getAccountId(), null);
+        }
         return true;
     }
 
