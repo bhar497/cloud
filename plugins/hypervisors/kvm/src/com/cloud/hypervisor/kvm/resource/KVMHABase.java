@@ -32,7 +32,7 @@ public class KVMHABase {
     private static final Logger s_logger = Logger.getLogger(KVMHABase.class);
     private long _timeout = 60000; /* 1 minutes */
     protected static String s_heartBeatPath;
-    protected long _heartBeatUpdateTimeout = 60000;
+    protected long _heartBeatUpdateTimeout = 45000;
     protected long _heartBeatUpdateFreq = 60000;
     protected long _heartBeatUpdateMaxTries = 5;
     protected long _heartBeatUpdateRetrySleep = 10000;
