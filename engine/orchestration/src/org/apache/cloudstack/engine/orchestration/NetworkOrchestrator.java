@@ -714,9 +714,12 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
                             List<DataCenterVnetVO> vnetVOs = _datacenterVnetDao.findVnet(plan.getDataCenterId(), plan.getPhysicalNetworkId(), vnet);
                             if (vnetVOs.size() == 1) {
                                 DataCenterVnetVO vnetVO = vnetVOs.get(0);
-                                vnetVO.setTakenAt(new Date());
-                                vnetVO.setAccountId(owner.getId());
-                                _datacenterVnetDao.update(vnetVO.getId(), vnetVO);
+                                if (vnetVO.getTakenAt() == null) {
+                                    vnetVO.setTakenAt(new Date());
+                                    vnetVO.setAccountId(owner.getId());
+                                    vnetVO.setReservationId(vo.getUuid());
+                                    _datacenterVnetDao.update(vnetVO.getId(), vnetVO);
+                                }
                             }
                         }
                     }
