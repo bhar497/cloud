@@ -2680,7 +2680,9 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
                     public void doInTransactionWithoutResult(final TransactionStatus status) {
                         final NetworkGuru guru = AdapterBase.getAdapterByName(networkGurus, networkFinal.getGuruName());
 
-                        if (!guru.trash(networkFinal, _networkOfferingDao.findById(networkFinal.getNetworkOfferingId()))) {
+                        NetworkOfferingVO networkOffering = _networkOfferingDao.findById(networkFinal.getNetworkOfferingId());
+
+                        if (!guru.trash(networkFinal, networkOffering)) {
                             throw new CloudRuntimeException("Failed to trash network.");
                         }
 
@@ -2711,6 +2713,10 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
                             if (updateResourceCount) {
                                 _resourceLimitMgr.decrementResourceCount(networkFinal.getAccountId(), ResourceType.network, networkFinal.getDisplayNetwork());
                             }
+                        }
+                        if (networkFinal.getBroadcastDomainType() == BroadcastDomainType.Vlan && networkFinal.getBroadcastUri() != null && networkOffering.getSpecifyVlan()) {
+                            s_logger.info("Cleaning up our manually assigned vlan from table");
+                            _dcDao.releaseVnet(BroadcastDomainType.getValue(networkFinal.getBroadcastUri()), networkFinal.getDataCenterId(), networkFinal.getPhysicalNetworkId(), networkFinal.getAccountId(), networkFinal.getUuid());
                         }
                     }
                 });
