@@ -125,7 +125,7 @@ public class BaremetalDhcpResourceBase extends ManagerBase implements ServerReso
     @Override
     public PingCommand getCurrentStatus(long id) {
         //TODO: check server
-        return new PingRoutingCommand(getType(), id, new HashMap<String, HostVmStateReportEntry>());
+        return new PingRoutingCommand(getType(), id, new HashMap<String, HostVmStateReportEntry>(), null);
     }
 
     protected ReadyAnswer execute(ReadyCommand cmd) {

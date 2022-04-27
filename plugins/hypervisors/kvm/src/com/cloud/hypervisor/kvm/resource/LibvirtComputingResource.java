@@ -2572,12 +2572,11 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
     @Override
     public PingCommand getCurrentStatus(final long id) {
-
         if (!_canBridgeFirewall) {
-            return new PingRoutingCommand(com.cloud.host.Host.Type.Routing, id, this.getHostVmStateReport());
+            return new PingRoutingCommand(com.cloud.host.Host.Type.Routing, id, this.getHostVmStateReport(), _monitor.isUnHealthy());
         } else {
             final HashMap<String, Pair<Long, Long>> nwGrpStates = syncNetworkGroups(id);
-            return new PingRoutingWithNwGroupsCommand(getType(), id, this.getHostVmStateReport(), nwGrpStates);
+            return new PingRoutingWithNwGroupsCommand(getType(), id, this.getHostVmStateReport(), nwGrpStates, _monitor.isUnHealthy());
         }
     }
 

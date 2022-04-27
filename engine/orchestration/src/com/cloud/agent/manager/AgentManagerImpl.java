@@ -41,6 +41,7 @@ import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
 import org.apache.cloudstack.agent.lb.IndirectAgentLB;
+import org.apache.cloudstack.alert.AlertService;
 import org.apache.cloudstack.ca.CAManager;
 import com.cloud.configuration.ManagementServiceConfiguration;
 import org.apache.cloudstack.framework.config.ConfigKey;
@@ -185,6 +186,8 @@ public class AgentManagerImpl extends ManagerBase implements AgentManager, Handl
 
     protected StateMachine2<Status, Status.Event, Host> _statusStateMachine = Status.getStateMachine();
     private final ConcurrentHashMap<Long, Long> _pingMap = new ConcurrentHashMap<Long, Long>(10007);
+
+    private final ConcurrentHashMap<Long, Boolean> agentUnhealthy = new ConcurrentHashMap<>();
 
     @Inject
     ResourceManager _resourceMgr;
@@ -1325,10 +1328,27 @@ public class AgentManagerImpl extends ManagerBase implements AgentManager, Handl
                             // if the router is sending a ping, verify the
                             // gateway was pingable
                             if (cmd instanceof PingRoutingCommand) {
-                                final boolean gatewayAccessible = ((PingRoutingCommand) cmd).isGatewayAccessible();
+                                PingRoutingCommand routingCommand = (PingRoutingCommand) cmd;
+                                final boolean gatewayAccessible = routingCommand.isGatewayAccessible();
                                 final HostVO host = _hostDao.findById(Long.valueOf(cmdHostId));
 
                                 if (host != null) {
+                                    if (routingCommand.shouldAlert()) {
+                                        if (!agentUnhealthy.getOrDefault(host.getId(), false)) {
+                                            agentUnhealthy.put(host.getId(), true);
+                                            final DataCenterVO dcVO = _dcDao.findById(host.getDataCenterId());
+                                            final HostPodVO podVO = _podDao.findById(host.getPodId());
+                                            final String hostDesc =
+                                                    "name: " + host.getName() + " (id:" + host.getId() + "), availability zone: " + dcVO.getName() + ", pod: "
+                                                            + podVO.getName();
+                                            _alertMgr.sendAlert(AlertService.AlertType.ALERT_TYPE_HOST, host.getDataCenterId(), host.getPodId(), "Host " + hostDesc + " is having heartbeat/NFS issues", "Host " + hostDesc + " reported that heartbeat updates are failing with the following pools: " + routingCommand.getAlertDetails());
+                                        }
+                                    } else {
+                                        if (agentUnhealthy.getOrDefault(host.getId(), false)) {
+                                            _alertMgr.clearAlert(AlertService.AlertType.ALERT_TYPE_HOST, host.getDataCenterId(), host.getPodId());
+                                            agentUnhealthy.put(host.getId(), false);
+                                        }
+                                    }
                                     if (!gatewayAccessible) {
                                         // alert that host lost connection to
                                         // gateway (cannot ping the default route)

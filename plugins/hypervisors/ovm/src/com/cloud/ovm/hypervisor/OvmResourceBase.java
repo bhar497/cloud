@@ -387,7 +387,7 @@ public class OvmResourceBase implements ServerResource, HypervisorResource {
     public PingCommand getCurrentStatus(long id) {
         try {
             OvmHost.ping(_conn);
-            return new PingRoutingCommand(getType(), id, getHostVmStateReport());
+            return new PingRoutingCommand(getType(), id, getHostVmStateReport(), null);
         } catch (XmlRpcException e) {
             s_logger.debug("Check agent status failed", e);
             return null;

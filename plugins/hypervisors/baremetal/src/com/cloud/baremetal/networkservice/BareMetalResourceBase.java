@@ -386,7 +386,7 @@ public class BareMetalResourceBase extends ManagerBase implements ServerResource
             return null;
         }
 
-        return new PingRoutingCommand(getType(), id, null);
+        return new PingRoutingCommand(getType(), id, null, null);
 
             /*
         if (hostId != null) {

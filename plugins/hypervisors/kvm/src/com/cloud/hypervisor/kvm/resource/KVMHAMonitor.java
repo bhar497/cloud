@@ -17,7 +17,6 @@
 package com.cloud.hypervisor.kvm.resource;
 
 import com.cloud.utils.script.Script;
-import org.apache.cloudstack.managed.context.ManagedContextRunnable;
 import org.apache.log4j.Logger;
 import org.libvirt.Connect;
 import org.libvirt.LibvirtException;
@@ -25,11 +24,9 @@ import org.libvirt.StoragePool;
 import org.libvirt.StoragePoolInfo.StoragePoolState;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,8 +35,9 @@ import java.util.stream.Collectors;
 
 public class KVMHAMonitor extends KVMHABase implements Runnable {
     private static final Logger s_logger = Logger.getLogger(KVMHAMonitor.class);
+
+    static final int missingHeartbeatTimeout = 60 * 2;
     private final Map<String, NfsStoragePool> _storagePool = new ConcurrentHashMap<String, NfsStoragePool>();
-    private final Map<String, Integer> poolHeartbeatFailedAttempts = new ConcurrentHashMap<>();
     AtomicBoolean running = new AtomicBoolean(true);
     private final Map<String, HeartbeatWriter> heartbeatWriters = new ConcurrentHashMap<>();
 
@@ -88,152 +86,13 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
         }
     }
 
-    public Set<String> getStoragePoolUuids() {
-        synchronized (_storagePool) {
-            return _storagePool.keySet();
+    String isUnHealthy() {
+        long minUpdateForHealthy = System.currentTimeMillis() - 1000 * missingHeartbeatTimeout;
+        List<String> pools = heartbeatWriters.values().stream().filter(w -> w.getFailedAttempts() >= 5 || w.isBehind(minUpdateForHealthy)).map(w -> w.poolUuid).collect(Collectors.toList());
+        if (pools.size() > 0) {
+            return "Pools having issues: " + String.join(", ", pools);
         }
-    }
-
-    private class Monitor extends ManagedContextRunnable {
-
-        @Override
-        protected void runInContext() {
-            Set<String> removedPools = new HashSet<String>();
-            for (String uuid : getStoragePoolUuids()) {
-                NfsStoragePool primaryStoragePool = getStoragePool(uuid);
-
-                // check for any that have been deregistered with libvirt and
-                // skip,remove them
-
-                StoragePool storage = null;
-                try {
-                    Connect conn = LibvirtConnection.getConnection();
-                    storage = conn.storagePoolLookupByUUIDString(uuid);
-                    if (storage == null) {
-                        s_logger.debug("Libvirt storage pool " + uuid + " not found, removing from HA list");
-                        removedPools.add(uuid);
-                        continue;
-
-                    } else if (storage.getInfo().state != StoragePoolState.VIR_STORAGE_POOL_RUNNING) {
-                        s_logger.debug("Libvirt storage pool " + uuid + " found, but not running, removing from HA list");
-
-                        removedPools.add(uuid);
-                        continue;
-                    }
-                    s_logger.debug("Found NFS storage pool " + uuid + " in libvirt, continuing");
-
-                } catch (LibvirtException e) {
-                    s_logger.debug("Failed to lookup libvirt storage pool " + uuid + " due to: " + e);
-
-                    // we only want to remove pool if it's not found, not if libvirt
-                    // connection fails
-                    if (e.toString().contains("pool not found")) {
-                        s_logger.debug("removing pool from HA monitor since it was deleted");
-                        removedPools.add(uuid);
-                        continue;
-                    }
-                }
-
-                String result = null;
-                // Try multiple times, but sleep in between tries to ensure it isn't a short lived transient error
-//                for (int i = 1; i <= _heartBeatUpdateMaxTries; i++) {
-                s_logger.debug("Attempting to write heartbeat file for pool path: " + primaryStoragePool._mountDestPath);
-                Script cmd = new Script(s_heartBeatPath, _heartBeatUpdateTimeout, s_logger);
-                cmd.add("-i", primaryStoragePool._poolIp);
-                cmd.add("-p", primaryStoragePool._poolMountSourcePath);
-                cmd.add("-m", primaryStoragePool._mountDestPath);
-                cmd.add("-h", _hostIP);
-                result = cmd.execute();
-                if (result != null) {
-                    int attempts = poolHeartbeatFailedAttempts.getOrDefault(primaryStoragePool._poolUUID, 0);
-                    s_logger.warn("write heartbeat failed: " + result + ", try: " + attempts + " of " + _heartBeatUpdateMaxTries);
-                    poolHeartbeatFailedAttempts.put(primaryStoragePool._poolUUID, attempts + 1);
-//                        try {
-//                            Thread.sleep(_heartBeatUpdateRetrySleep);
-//                        } catch (InterruptedException e) {
-//                            s_logger.debug("[ignored] interupted between heartbeat retries.");
-//                        }
-                }
-//                    else {
-//                        break;
-//                    }
-//                }
-
-//                if (result != null) {
-//                    // Stop cloudstack-agent if can't write to heartbeat file.
-//                    // This will raise an alert on the mgmt server
-//                    s_logger.warn("write heartbeat failed: " + result + "; stopping cloudstack-agent");
-//                    Script cmd = new Script(s_heartBeatPath, _heartBeatUpdateTimeout, s_logger);
-//                    cmd.add("-i", primaryStoragePool._poolIp);
-//                    cmd.add("-p", primaryStoragePool._poolMountSourcePath);
-//                    cmd.add("-m", primaryStoragePool._mountDestPath);
-//                    cmd.add("-c");
-//                    result = cmd.execute();
-//                }
-            }
-
-            if (!removedPools.isEmpty()) {
-                for (String uuid : removedPools) {
-                    removeStoragePool(uuid);
-                }
-            }
-
-        }
-    }
-
-    private class WriteHeartbeat implements Callable<Boolean> {
-        private String poolUuid;
-
-        WriteHeartbeat(String poolUuid) {
-            this.poolUuid = poolUuid;
-        }
-
-        @Override
-        public Boolean call() {
-            NfsStoragePool primaryStoragePool = getStoragePool(poolUuid);
-
-            // check for any that have been deregistered with libvirt and skip,remove them
-            try {
-                Connect conn = LibvirtConnection.getConnection();
-                StoragePool storage = conn.storagePoolLookupByUUIDString(poolUuid);
-                if (storage == null) {
-                    s_logger.debug("Libvirt storage pool " + poolUuid + " not found, removing from HA list");
-                    removeStoragePool(poolUuid);
-                    return true;
-                } else if (storage.getInfo().state != StoragePoolState.VIR_STORAGE_POOL_RUNNING) {
-                    s_logger.debug("Libvirt storage pool " + poolUuid + " found, but not running, removing from HA list");
-                    removeStoragePool(poolUuid);
-                    return true;
-                }
-                s_logger.debug("Found NFS storage pool " + poolUuid + " in libvirt, continuing");
-
-            } catch (LibvirtException e) {
-                s_logger.debug("Failed to lookup libvirt storage pool " + poolUuid + " due to: " + e);
-
-                // we only want to remove pool if it's not found, not if libvirt
-                // connection fails
-                if (e.toString().contains("pool not found")) {
-                    s_logger.debug("removing pool from HA monitor since it was deleted");
-                    removeStoragePool(poolUuid);
-                    return true;
-                }
-            }
-
-            String result;
-            s_logger.debug("Attempting to write heartbeat file for pool path: " + primaryStoragePool._mountDestPath);
-            Script cmd = new Script(s_heartBeatPath, _heartBeatUpdateTimeout, s_logger);
-            cmd.add("-i", primaryStoragePool._poolIp);
-            cmd.add("-p", primaryStoragePool._poolMountSourcePath);
-            cmd.add("-m", primaryStoragePool._mountDestPath);
-            cmd.add("-h", _hostIP);
-            result = cmd.execute();
-            if (result != null) {
-                int attempts = poolHeartbeatFailedAttempts.getOrDefault(primaryStoragePool._poolUUID, 0);
-                s_logger.warn("write heartbeat failed: " + result + ", try: " + attempts + " of " + _heartBeatUpdateMaxTries);
-                poolHeartbeatFailedAttempts.put(primaryStoragePool._poolUUID, attempts + 1);
-            }
-            return false;
-        }
+        return null;
     }
 
     private class HeartbeatWriter implements Runnable {
@@ -243,6 +102,7 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
         private final AtomicBoolean poolRunning = new AtomicBoolean(false);
         private final AtomicInteger attempts = new AtomicInteger(0);
         private final String poolUuid;
+        private long lastUpdate;
 
         HeartbeatWriter(String poolUuid) {
             this.poolUuid = poolUuid;
@@ -277,6 +137,10 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
 
         public int getFailedAttempts() {
             return this.attempts.get();
+        }
+
+        public boolean isBehind(long minTime) {
+            return this.lastUpdate < minTime;
         }
 
         public String getPoolUuid() {
@@ -329,6 +193,7 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
                 } else {
                     this.attempts.set(0);
                 }
+                lastUpdate = System.currentTimeMillis();
 
                 long remaining = start + _heartBeatUpdateFreq - System.currentTimeMillis();
                 if (remaining > 0) {
@@ -342,7 +207,7 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
                         remaining = start + _heartBeatUpdateFreq - System.currentTimeMillis();
                     }
                 } else {
-                    logger.error("Running behind on heartbeat by " + (-remaining/1000) + " seconds");
+                    logger.error("Running behind on heartbeat by " + (-remaining / 1000) + " seconds");
                 }
             }
             heartbeatWriters.remove(poolUuid);
@@ -366,52 +231,11 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
                 stoppedWriters.forEach(w -> heartbeatWriters.remove(w.poolUuid));
             }
 
-            // In theory we could examine the failure rate of different writers and trigger alerts on the mgmt server
             try {
                 Thread.sleep(_heartBeatUpdateFreq);
             } catch (InterruptedException e) {
                 s_logger.debug("[ignored] interupted between cleanups of heartbeats");
             }
-
-//            long start = System.currentTimeMillis();
-//            Set<String> storagePoolUuids = getStoragePoolUuids();
-//            ScheduledExecutorService executor = Executors.newScheduledThreadPool(storagePoolUuids.size() + 1, new NamedThreadFactory("Heartbeat Writers at " + start));
-//            List<Future<Boolean>> writers = storagePoolUuids.stream().map(uuid -> executor.submit(new WriteHeartbeat(uuid))).collect(Collectors.toList());
-//
-//            // Everyone gets 45 seconds to write their heartbeat file, then they get cancelled. Boolean is for if everyone stopped.
-//            Future<Boolean> cancel = executor.schedule(() -> writers.stream()
-//                    .allMatch(future -> future.isDone() || future.cancel(true)), 45, TimeUnit.SECONDS);
-//
-//            try {
-//                boolean success = cancel.get();
-//                if (!success) {
-//                    s_logger.warn("Unable to cancel all heartbeat writers");
-//                }
-//                long remaining = start + _heartBeatUpdateFreq - System.currentTimeMillis();
-//                if (remaining > 0) {
-//                    Thread.sleep(remaining);
-//                } else {
-//                    s_logger.warn("Running behind on heartbeat by " + (-remaining) + " microseconds");
-//                }
-//            } catch (InterruptedException | ExecutionException e) {
-//                e.printStackTrace();
-//            } finally {
-//                executor.shutdownNow();
-//            }
-
-//            Thread monitorThread = new Thread(new Monitor());
-//            monitorThread.start();
-//            try {
-//                monitorThread.join();
-//            } catch (InterruptedException e) {
-//                s_logger.debug("[ignored] interupted joining monitor.");
-//            }
-//
-//            try {
-//                Thread.sleep(_heartBeatUpdateFreq);
-//            } catch (InterruptedException e) {
-//                s_logger.debug("[ignored] interupted between heartbeats.");
-//            }
         }
         s_logger.info("Shutting down KVM HA Monitor");
     }
