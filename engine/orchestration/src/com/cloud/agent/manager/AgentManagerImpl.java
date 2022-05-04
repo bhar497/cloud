@@ -187,7 +187,7 @@ public class AgentManagerImpl extends ManagerBase implements AgentManager, Handl
     protected StateMachine2<Status, Status.Event, Host> _statusStateMachine = Status.getStateMachine();
     private final ConcurrentHashMap<Long, Long> _pingMap = new ConcurrentHashMap<Long, Long>(10007);
 
-    private final ConcurrentHashMap<Long, Boolean> agentUnhealthy = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, String> agentUnhealthy = new ConcurrentHashMap<>();
 
     @Inject
     ResourceManager _resourceMgr;
@@ -1334,19 +1334,20 @@ public class AgentManagerImpl extends ManagerBase implements AgentManager, Handl
 
                                 if (host != null) {
                                     if (routingCommand.shouldAlert()) {
-                                        if (!agentUnhealthy.getOrDefault(host.getId(), false)) {
-                                            agentUnhealthy.put(host.getId(), true);
+                                        if (agentUnhealthy.get(host.getId()) == null || !routingCommand.getAlertDetails().equals(agentUnhealthy.get(host.getId()))) {
+                                            agentUnhealthy.put(host.getId(), routingCommand.getAlertDetails());
                                             final DataCenterVO dcVO = _dcDao.findById(host.getDataCenterId());
                                             final HostPodVO podVO = _podDao.findById(host.getPodId());
                                             final String hostDesc =
                                                     "name: " + host.getName() + " (id:" + host.getId() + "), availability zone: " + dcVO.getName() + ", pod: "
                                                             + podVO.getName();
-                                            _alertMgr.sendAlert(AlertService.AlertType.ALERT_TYPE_HOST, host.getDataCenterId(), host.getPodId(), "Host " + hostDesc + " is having heartbeat/NFS issues", "Host " + hostDesc + " reported that heartbeat updates are failing with the following pools: " + routingCommand.getAlertDetails());
+                                            String message = "Host " + hostDesc + " is reporting problems: " + routingCommand.getAlertDetails();
+                                            _alertMgr.sendAlert(AlertService.AlertType.ALERT_TYPE_HOST, host.getDataCenterId(), host.getPodId(), message, message);
                                         }
                                     } else {
-                                        if (agentUnhealthy.getOrDefault(host.getId(), false)) {
+                                        if (agentUnhealthy.get(host.getId()) != null) {
                                             _alertMgr.clearAlert(AlertService.AlertType.ALERT_TYPE_HOST, host.getDataCenterId(), host.getPodId());
-                                            agentUnhealthy.put(host.getId(), false);
+                                            agentUnhealthy.remove(host.getId());
                                         }
                                     }
                                     if (!gatewayAccessible) {

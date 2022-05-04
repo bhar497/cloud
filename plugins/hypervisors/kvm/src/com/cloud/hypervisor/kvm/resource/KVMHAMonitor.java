@@ -90,7 +90,7 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
         long minUpdateForHealthy = System.currentTimeMillis() - 1000 * missingHeartbeatTimeout;
         List<String> pools = heartbeatWriters.values().stream().filter(w -> w.getFailedAttempts() >= 5 || w.isBehind(minUpdateForHealthy)).map(w -> w.poolUuid).collect(Collectors.toList());
         if (pools.size() > 0) {
-            return "Pools having issues: " + String.join(", ", pools);
+            return "Host is having heartbeat issues with the following pools: " + String.join(", ", pools);
         }
         return null;
     }
