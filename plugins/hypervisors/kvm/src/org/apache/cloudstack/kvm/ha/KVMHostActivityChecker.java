@@ -148,7 +148,6 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
             throw new IllegalStateException("Calling KVM investigator for non KVM Host of type " + agent.getHypervisorType());
         }
         HashMap<StoragePool, List<Volume>> poolVolMap = getVolumeUuidOnHost(agent);
-        List<Boolean> poolActivity = new ArrayList<>();
         for (StoragePool pool : poolVolMap.keySet()) {
             //for each storage pool find activity
             List<Volume> volume_list = poolVolMap.get(pool);
@@ -156,17 +155,21 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
             //send the command to appropriate storage pool
             Answer answer = storageManager.sendToPool(pool, getNeighbors(agent), cmd);
             if (answer != null) {
-                poolActivity.add(! answer.getResult());
+                if (!answer.getResult()) {
+                    if (LOG.isDebugEnabled()){
+                        LOG.debug("Resource active = true");
+                    }
+                    return true;
+                }
             } else {
                 throw new IllegalStateException("Did not get a valid response for VM activity check for host " + agent.getId());
             }
         }
-        boolean activityStatus = poolActivity.stream().anyMatch(x -> x);
 
         if (LOG.isDebugEnabled()){
-            LOG.debug("Resource active = " + activityStatus);
+            LOG.debug("Resource active = false");
         }
-        return activityStatus;
+        return false;
     }
 
     private HashMap<StoragePool, List<Volume>> getVolumeUuidOnHost(Host agent) {
