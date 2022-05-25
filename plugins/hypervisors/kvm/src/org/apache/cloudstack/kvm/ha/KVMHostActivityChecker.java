@@ -151,6 +151,10 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
         for (StoragePool pool : poolVolMap.keySet()) {
             //for each storage pool find activity
             List<Volume> volume_list = poolVolMap.get(pool);
+            if (volume_list.size() == 0) {
+                // If no volumes, just skip this pool
+                continue;
+            }
             final CheckVMActivityOnStoragePoolCommand cmd = new CheckVMActivityOnStoragePoolCommand(agent, pool, volume_list, suspectTime);
             //send the command to appropriate storage pool
             Answer answer = storageManager.sendToPool(pool, getNeighbors(agent), cmd);
