@@ -19,7 +19,6 @@ package com.cloud.hypervisor.kvm.resource;
 import com.cloud.utils.script.OutputInterpreter;
 import com.cloud.utils.script.Script;
 import org.apache.log4j.Logger;
-import org.joda.time.Duration;
 
 import java.util.concurrent.Callable;
 
