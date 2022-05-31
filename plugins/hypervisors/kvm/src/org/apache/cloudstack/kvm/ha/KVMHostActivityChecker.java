@@ -42,12 +42,13 @@ import org.apache.cloudstack.ha.provider.HealthCheckerInterface;
 import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import org.joda.time.DateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class KVMHostActivityChecker extends AdapterBase implements ActivityCheckerInterface<Host>, HealthCheckerInterface<Host> {
     private final static Logger LOG = Logger.getLogger(KVMHostActivityChecker.class);
@@ -69,11 +70,9 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
     public boolean isActive(Host r, DateTime suspectTime) throws HACheckerException {
         try {
             return isVMActivtyOnHost(r, suspectTime);
-        }
-        catch (StorageUnavailableException e){
+        } catch (StorageUnavailableException e) {
             throw new HACheckerException("Storage is unavailable to do the check, mostly host is not reachable ", e);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             throw new HACheckerException("Operation timed out, mostly host is not reachable ", e);
         }
     }
@@ -94,11 +93,10 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
             Answer answer = agentMgr.easySend(agent.getId(), cmd);
             if (answer != null) {
                 hostStatus = answer.getResult() ? Status.Down : Status.Up;
-                if ( hostStatus == Status.Up ){
+                if (hostStatus == Status.Up) {
                     return true;
                 }
-            }
-            else {
+            } else {
                 hostStatus = Status.Disconnected;
             }
         } catch (Exception e) {
@@ -110,14 +108,14 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
             if (neighbor.getId() == agent.getId() || (neighbor.getHypervisorType() != Hypervisor.HypervisorType.KVM && neighbor.getHypervisorType() != Hypervisor.HypervisorType.LXC)) {
                 continue;
             }
-            if (LOG.isTraceEnabled()){
+            if (LOG.isTraceEnabled()) {
                 LOG.trace("Investigating host:" + agent.getId() + " via neighbouring host:" + neighbor.getId());
             }
             try {
                 Answer answer = agentMgr.easySend(neighbor.getId(), cmd);
                 if (answer != null) {
                     neighbourStatus = answer.getResult() ? Status.Down : Status.Up;
-                    if (LOG.isTraceEnabled()){
+                    if (LOG.isTraceEnabled()) {
                         LOG.trace("Neighbouring host:" + neighbor.getId() + " returned status:" + neighbourStatus + " for the investigated host:" + agent.getId());
                     }
                     if (neighbourStatus == Status.Up) {
@@ -137,7 +135,7 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
             hostStatus = Status.Down;
         }
 
-        if (LOG.isTraceEnabled()){
+        if (LOG.isTraceEnabled()) {
             LOG.trace("Resource state = " + hostStatus.name());
         }
         return hostStatus == Status.Up;
@@ -148,31 +146,52 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
             throw new IllegalStateException("Calling KVM investigator for non KVM Host of type " + agent.getHypervisorType());
         }
         HashMap<StoragePool, List<Volume>> poolVolMap = getVolumeUuidOnHost(agent);
-        for (StoragePool pool : poolVolMap.keySet()) {
-            //for each storage pool find activity
-            List<Volume> volume_list = poolVolMap.get(pool);
-            if (volume_list.size() == 0) {
+
+        AtomicReference<StorageUnavailableException> storageException = new AtomicReference<>();
+
+        /*
+        Parallelize so that we have fewer problems with timeouts. This is to handle the situation where the first pool is having NFS issues,
+        and hangs, but other pools are just fine and can report activity. Since we only care that one of them has activity,this should make
+        things more stable
+         */
+        boolean activity = poolVolMap.entrySet().parallelStream().anyMatch(entry -> {
+            StoragePool pool = entry.getKey();
+            List<Volume> volumeList = entry.getValue();
+            if (volumeList.size() == 0) {
                 // If no volumes, just skip this pool
-                continue;
+                return false;
             }
-            final CheckVMActivityOnStoragePoolCommand cmd = new CheckVMActivityOnStoragePoolCommand(agent, pool, volume_list, suspectTime);
+            final CheckVMActivityOnStoragePoolCommand cmd = new CheckVMActivityOnStoragePoolCommand(agent, pool, volumeList, suspectTime);
             //send the command to appropriate storage pool
-            Answer answer = storageManager.sendToPool(pool, getNeighbors(agent), cmd);
+            Answer answer;
+            try {
+                answer = storageManager.sendToPool(pool, getNeighbors(agent), cmd);
+            } catch (StorageUnavailableException e) {
+                storageException.set(e);
+                LOG.error("Caught storage exception", e);
+                return false;
+            }
             if (answer != null) {
                 if (!answer.getResult()) {
-                    if (LOG.isDebugEnabled()){
-                        LOG.debug("Resource active = true");
-                    }
+                    LOG.debug("Resource active " + pool + " = true");
                     return true;
                 }
             } else {
                 throw new IllegalStateException("Did not get a valid response for VM activity check for host " + agent.getId());
             }
+            return false;
+        });
+
+        if (activity) {
+            return true;
         }
 
-        if (LOG.isDebugEnabled()){
-            LOG.debug("Resource active = false");
+        // We only care about this exception if there is no activity
+        if (storageException.get() != null) {
+            throw storageException.get();
         }
+
+        LOG.debug("Resource active = false");
         return false;
     }
 
