@@ -81,16 +81,6 @@ fi
 hbFile="$MountPoint/KVMHA/hb-$HostIP"
 acFile="$MountPoint/KVMHA/ac-$HostIP"
 
-# First check: heartbeat file
-now=$(date +%s)
-hb=$(cat $hbFile)
-diff=$(expr $now - $hb)
-if [ $diff -lt 61 ]
-then
-  echo "=====> ALIVE <====="
-  exit 0
-fi
-
 if [ -z "$UUIDList" ]
 then
   echo "=====> DEAD <======"

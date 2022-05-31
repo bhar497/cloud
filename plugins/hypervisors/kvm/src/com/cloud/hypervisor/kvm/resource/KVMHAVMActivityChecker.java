@@ -30,7 +30,7 @@ public class KVMHAVMActivityChecker extends KVMHABase implements Callable<Boolea
     final private String hostIP;
     final private String volumeUuidList;
     final private String vmActivityCheckPath;
-    final private Duration activityScriptTimeout = Duration.standardSeconds(3600L);
+    final private Duration activityScriptTimeout = Duration.standardSeconds(10L);
     final private long suspectTimeInSeconds;
 
     public KVMHAVMActivityChecker(final NfsStoragePool pool, final String host, final String volumeUUIDListString, String vmActivityCheckPath, final long suspectTime) {
