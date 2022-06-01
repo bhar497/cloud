@@ -48,8 +48,6 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class KVMHostActivityChecker extends AdapterBase implements ActivityCheckerInterface<Host>, HealthCheckerInterface<Host> {
@@ -156,41 +154,33 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
         and hangs, but other pools are just fine and can report activity. Since we only care that one of them has activity,this should make
         things more stable
          */
-        ForkJoinPool customThreadPool = new ForkJoinPool(poolVolMap.size());
-        boolean activity;
-        try {
-            activity = customThreadPool.submit(() -> poolVolMap.entrySet().parallelStream().anyMatch(entry -> {
-                StoragePool pool = entry.getKey();
-                List<Volume> volumeList = entry.getValue();
-                if (volumeList.size() == 0) {
-                    // If no volumes, just skip this pool
-                    return false;
-                }
-                final CheckVMActivityOnStoragePoolCommand cmd = new CheckVMActivityOnStoragePoolCommand(agent, pool, volumeList, suspectTime);
-                //send the command to appropriate storage pool
-                Answer answer;
-                try {
-                    answer = storageManager.sendToPool(pool, getNeighbors(agent), cmd);
-                } catch (StorageUnavailableException e) {
-                    storageException.set(e);
-                    LOG.error("Caught storage exception", e);
-                    return false;
-                }
-                if (answer != null) {
-                    if (!answer.getResult()) {
-                        LOG.debug("Resource active " + pool + " = true");
-                        return true;
-                    }
-                } else {
-                    throw new IllegalStateException("Did not get a valid response for VM activity check for host " + agent.getId());
-                }
+        boolean activity = poolVolMap.entrySet().parallelStream().anyMatch(entry -> {
+            StoragePool pool = entry.getKey();
+            List<Volume> volumeList = entry.getValue();
+            if (volumeList.size() == 0) {
+                // If no volumes, just skip this pool
                 return false;
-            })).get();
-        } catch (InterruptedException | ExecutionException e) {
-            customThreadPool.shutdown();
-            throw new RuntimeException(e);
-        }
-        customThreadPool.shutdown();
+            }
+            final CheckVMActivityOnStoragePoolCommand cmd = new CheckVMActivityOnStoragePoolCommand(agent, pool, volumeList, suspectTime);
+            //send the command to appropriate storage pool
+            Answer answer;
+            try {
+                answer = storageManager.sendToPool(pool, getNeighbors(agent), cmd);
+            } catch (StorageUnavailableException e) {
+                storageException.set(e);
+                LOG.error("Caught storage exception", e);
+                return false;
+            }
+            if (answer != null) {
+                if (!answer.getResult()) {
+                    LOG.debug("Resource active " + pool + " = true");
+                    return true;
+                }
+            } else {
+                throw new IllegalStateException("Did not get a valid response for VM activity check for host " + agent.getId());
+            }
+            return false;
+        });
 
         if (activity) {
             return true;
