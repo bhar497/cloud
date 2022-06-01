@@ -37,6 +37,7 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
     private static final Logger s_logger = Logger.getLogger(KVMHAMonitor.class);
 
     static final int missingHeartbeatTimeout = 60 * 2;
+    static final int missedHeartbeatCount = 5;
     private final Map<String, NfsStoragePool> _storagePool = new ConcurrentHashMap<String, NfsStoragePool>();
     AtomicBoolean running = new AtomicBoolean(true);
     private final Map<String, HeartbeatWriter> heartbeatWriters = new ConcurrentHashMap<>();
@@ -88,7 +89,10 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
 
     String isUnHealthy() {
         long minUpdateForHealthy = System.currentTimeMillis() - 1000 * missingHeartbeatTimeout;
-        List<String> pools = heartbeatWriters.values().stream().filter(w -> w.getFailedAttempts() >= 5 || w.isBehind(minUpdateForHealthy)).map(w -> w.poolUuid).collect(Collectors.toList());
+        List<String> pools = heartbeatWriters.values().stream()
+                .filter(w -> w.getFailedAttempts() >= missedHeartbeatCount || w.isBehind(minUpdateForHealthy))
+                .map(w -> w.poolUuid)
+                .collect(Collectors.toList());
         if (pools.size() > 0) {
             return "Host is having heartbeat issues with the following pools: " + String.join(", ", pools);
         }
@@ -99,10 +103,10 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
         private final Logger logger;
         private final Connect conn;
         private Thread worker;
-        private final AtomicBoolean poolRunning = new AtomicBoolean(false);
-        private final AtomicInteger attempts = new AtomicInteger(0);
+        private final AtomicBoolean running = new AtomicBoolean(false);
+        private final AtomicInteger failedAttempts = new AtomicInteger(0);
         private final String poolUuid;
-        private long lastUpdate;
+        private long lastUpdateDone;
 
         HeartbeatWriter(String poolUuid) {
             this.poolUuid = poolUuid;
@@ -128,7 +132,7 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
 
         private void internalStop() {
             logger.info("Stopping heartbeat writer for pool: " + this.poolUuid);
-            poolRunning.set(false);
+            running.set(false);
         }
 
         void join() throws InterruptedException {
@@ -136,11 +140,11 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
         }
 
         public int getFailedAttempts() {
-            return this.attempts.get();
+            return this.failedAttempts.get();
         }
 
-        public boolean isBehind(long minTime) {
-            return this.lastUpdate < minTime;
+        public boolean isBehind(long checkTime) {
+            return this.lastUpdateDone < checkTime;
         }
 
         public String getPoolUuid() {
@@ -149,8 +153,8 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
 
         @Override
         public void run() {
-            poolRunning.set(true);
-            while (poolRunning.get()) {
+            running.set(true);
+            while (running.get()) {
                 long start = System.currentTimeMillis();
                 logger.debug("Checking to see if pool is still active");
                 NfsStoragePool primaryStoragePool = getStoragePool(poolUuid);
@@ -188,15 +192,15 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
                 cmd.add("-h", _hostIP);
                 String result = cmd.execute();
                 if (result != null) {
-                    int attempts = this.attempts.getAndIncrement();
-                    logger.warn("write heartbeat failed: " + result + ", try: " + (attempts + 1) + " of " + _heartBeatUpdateMaxTries);
+                    int attempts = this.failedAttempts.getAndIncrement();
+                    logger.warn("write heartbeat failed: " + result + ", try: " + (attempts + 1));
                 } else {
-                    this.attempts.set(0);
+                    this.failedAttempts.set(0);
                 }
-                lastUpdate = System.currentTimeMillis();
+                lastUpdateDone = System.currentTimeMillis();
 
                 long remaining = start + _heartBeatUpdateFreq - System.currentTimeMillis();
-                if (remaining > 0) {
+                if (remaining >= 0) {
                     while (remaining > 0) {
                         try {
                             // Sleep is getting interrupted when script times out. Let's loop until it sorts out.
@@ -223,11 +227,19 @@ public class KVMHAMonitor extends KVMHABase implements Runnable {
             Set<String> pools = _storagePool.keySet();
             if (!writers.containsAll(pools)) {
                 s_logger.info("Pool missing heartbeat writer");
-                Map<String, HeartbeatWriter> newWriters = pools.stream().filter(pool -> !writers.contains(pool)).map(HeartbeatWriter::new).peek(HeartbeatWriter::start).collect(Collectors.toMap(HeartbeatWriter::getPoolUuid, Function.identity()));
+                Map<String, HeartbeatWriter> newWriters = pools.stream()
+                        .filter(pool -> !writers.contains(pool))
+                        .map(HeartbeatWriter::new)
+                        .peek(HeartbeatWriter::start)
+                        .collect(Collectors.toMap(HeartbeatWriter::getPoolUuid, Function.identity()));
                 heartbeatWriters.putAll(newWriters);
             } else if (!pools.containsAll(writers)) {
                 s_logger.info("Writer for pool that doesn't exist found");
-                List<HeartbeatWriter> stoppedWriters = writers.stream().filter(w -> !pools.contains(w)).map(heartbeatWriters::get).peek(HeartbeatWriter::stop).collect(Collectors.toList());
+                List<HeartbeatWriter> stoppedWriters = writers.stream()
+                        .filter(w -> !pools.contains(w))
+                        .map(heartbeatWriters::get)
+                        .peek(HeartbeatWriter::stop)
+                        .collect(Collectors.toList());
                 stoppedWriters.forEach(w -> heartbeatWriters.remove(w.poolUuid));
             }
 

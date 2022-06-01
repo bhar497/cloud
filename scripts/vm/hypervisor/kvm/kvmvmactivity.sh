@@ -78,7 +78,6 @@ then
    exit 2
 fi
 
-hbFile="$MountPoint/KVMHA/hb-$HostIP"
 acFile="$MountPoint/KVMHA/ac-$HostIP"
 
 if [ -z "$UUIDList" ]
