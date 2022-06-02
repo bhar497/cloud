@@ -160,9 +160,7 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
             Answer answer = storageManager.sendToPool(pool, getNeighbors(agent), cmd);
             if (answer != null) {
                 if (!answer.getResult()) {
-                    if (LOG.isDebugEnabled()){
-                        LOG.debug("Resource active = true");
-                    }
+                    LOG.debug("Resource active = true");
                     return true;
                 }
             } else {
@@ -170,9 +168,7 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
             }
         }
 
-        if (LOG.isDebugEnabled()){
-            LOG.debug("Resource active = false");
-        }
+        LOG.debug("Resource active = false");
         return false;
     }
 
