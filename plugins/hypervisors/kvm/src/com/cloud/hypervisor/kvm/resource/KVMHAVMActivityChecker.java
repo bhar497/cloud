@@ -55,7 +55,7 @@ public class KVMHAVMActivityChecker extends KVMHABase implements Callable<Boolea
         LOG.debug("KVMHAVMActivityChecker pool: " + nfsStoragePool._poolIp);
         LOG.debug("KVMHAVMActivityChecker result: " + result);
         LOG.debug("KVMHAVMActivityChecker parser: " + parser.getLine());
-        if (result == null && parser.getLine().contains("DEAD") || Script.ERR_TIMEOUT.equals(result)) {
+        if (result == null && parser.getLine().contains("DEAD")) {
             return false;
         } else {
             return true;
