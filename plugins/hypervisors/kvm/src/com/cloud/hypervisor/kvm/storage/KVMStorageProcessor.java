@@ -978,7 +978,7 @@ public class KVMStorageProcessor implements StorageProcessor {
         } finally {
             if (isCreatedFromVmSnapshot) {
                 s_logger.debug("Ignoring removal of vm snapshot on primary as this snapshot is created from vm snapshot");
-            } else {
+            } else if (!snapshotName.startsWith("/.snapshot")) {
                 try {
                     /* Delete the snapshot on primary */
                     DomainInfo.DomainState state = null;
@@ -994,45 +994,47 @@ public class KVMStorageProcessor implements StorageProcessor {
 
                     final KVMStoragePool primaryStorage = storagePoolMgr.getStoragePool(primaryStore.getPoolType(),
                             primaryStore.getUuid());
-                    // Check to see if the snapshotName contains '-snapshot-', if so, just blow away the file
-                    if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryStorage.isExternalSnapshot() && !snapshotName.contains("-snapshot-")) {
-                        final DomainSnapshot snap = vm.snapshotLookupByName(snapshotName);
-                        try {
-                            vm.suspend();
-                        } catch(final Exception e) {
-                            s_logger.debug("Failed to suspend the VM: " + e);
-                            throw e;
-                        }
-                        snap.delete(0);
+                        // Check to see if the snapshotName contains '-snapshot-', if so, just blow away the file
+                        if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryStorage.isExternalSnapshot() && !snapshotName.contains("-snapshot-")) {
+                            final DomainSnapshot snap = vm.snapshotLookupByName(snapshotName);
+                            try {
+                                vm.suspend();
+                            } catch(final Exception e) {
+                                s_logger.debug("Failed to suspend the VM: " + e);
+                                throw e;
+                            }
+                            snap.delete(0);
 
-                        /*
-                         * libvirt on RHEL6 doesn't handle resume event emitted from
-                         * qemu
-                         */
-                        vm = resource.getDomain(conn, vmName);
-                        state = vm.getInfo().state;
-                        if (state == DomainInfo.DomainState.VIR_DOMAIN_PAUSED) {
-                            vm.resume();
-                        }
-                    } else {
-                        if (primaryPool.getType() != StoragePoolType.RBD) {
-                            final Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
-                            command.add("-d", snapshotDisk.getPath());
-                            command.add("-n", snapshotName);
-                            final String result = command.execute();
-                            if (result != null) {
-                                s_logger.debug("Failed to delete snapshot on primary: " + result);
-                                // return new CopyCmdAnswer("Failed to backup snapshot: " + result);
+                            /*
+                             * libvirt on RHEL6 doesn't handle resume event emitted from
+                             * qemu
+                             */
+                            vm = resource.getDomain(conn, vmName);
+                            state = vm.getInfo().state;
+                            if (state == DomainInfo.DomainState.VIR_DOMAIN_PAUSED) {
+                                vm.resume();
+                            }
+                        } else {
+                            if (primaryPool.getType() != StoragePoolType.RBD) {
+                                final Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
+                                command.add("-d", snapshotDisk.getPath());
+                                command.add("-n", snapshotName);
+                                final String result = command.execute();
+                                if (result != null) {
+                                    s_logger.debug("Failed to delete snapshot on primary: " + result);
+                                    // return new CopyCmdAnswer("Failed to backup snapshot: " + result);
+                                }
                             }
                         }
-                    }
                 } catch (final Exception ex) {
                     s_logger.error("Failed to delete snapshots on primary", ex);
                 }
+            } else {
+                s_logger.debug("Ingoring removal of snapshot because this was created by ONTAP plugin");
             }
 
-            try {
-                if (secondaryStoragePool != null) {
+        try {
+            if (secondaryStoragePool != null) {
                     secondaryStoragePool.delete();
                 }
             } catch (final Exception ex) {

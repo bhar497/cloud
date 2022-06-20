@@ -247,6 +247,18 @@ backup_snapshot() {
       return 0
     fi
 
+    if [[ $snapshotname =~ .*\.snapshot.* ]]
+    then
+      local snapshotFile=`dirname $disk`$snapshotname
+      cp $snapshotFile $destPath/$destName
+      if [ $? -gt 0 ]
+      then
+        printf "Unable to copy snapshot file ${snapshotFile}" >&2
+        return 1
+      fi
+      return 0
+    fi
+
     # Does the snapshot exist?
     $qemu_img snapshot $forceSharedWrite -l $disk|grep -w "$snapshotname" >& /dev/null
     if [ $? -gt 0 ]
