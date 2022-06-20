@@ -878,6 +878,7 @@ public class KVMStorageProcessor implements StorageProcessor {
         final boolean isCreatedFromVmSnapshot = (index == -1) ? true: false; // -1 means the snapshot is created from existing vm snapshot
         String snapshotName = snapshot.getPath().substring(index + 1);
         String descName = snapshotName;
+        // This signifies that it is an ONTAP plugin snapshot, so we change our behavior here
         if (snapshot.getPath().startsWith("/.snapshot")) {
             snapshotName = snapshot.getPath();
             descName = UUID.randomUUID().toString();
@@ -997,8 +998,7 @@ public class KVMStorageProcessor implements StorageProcessor {
 
                     final KVMStoragePool primaryStorage = storagePoolMgr.getStoragePool(primaryStore.getPoolType(),
                             primaryStore.getUuid());
-                        // Check to see if the snapshotName contains '-snapshot-', if so, just blow away the file
-                        if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryStorage.isExternalSnapshot() && !snapshotName.contains("-snapshot-")) {
+                        if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryStorage.isExternalSnapshot()) {
                             final DomainSnapshot snap = vm.snapshotLookupByName(snapshotName);
                             try {
                                 vm.suspend();
@@ -1033,7 +1033,7 @@ public class KVMStorageProcessor implements StorageProcessor {
                     s_logger.error("Failed to delete snapshots on primary", ex);
                 }
             } else {
-                s_logger.debug("Ingoring removal of snapshot because this was created by ONTAP plugin");
+                s_logger.debug("Ignoring removal of snapshot because this was created by ONTAP plugin");
             }
 
         try {

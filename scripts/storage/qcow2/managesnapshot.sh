@@ -152,17 +152,6 @@ destroy_snapshot() {
     fi
     lvm lvremove -f "${vg}/${snapshotname}-cow"
   elif [ -f $disk ]; then
-     if [[ $snapshotname =~ .*-snapshot-.* ]]
-     then
-       local snapshotFile=`dirname $disk`/$snapshotname
-       rm $snapshotFile
-       if [ $? -gt 0 ]
-       then
-         printf "Unable to delete snapshot file ${snapshotFile}" >&2
-         return 1
-       fi
-       return 0
-     fi
      #delete all the existing disk snapshots
      $qemu_img snapshot -l $disk |tail -n +3| grep -i '[0-9a-z]\{8\}-[0-9a-z]\{4\}' | awk '{print $1}'|xargs -I {} $qemu_img snapshot -d {} $disk >&2
      if [ $? -gt 0 ]
@@ -234,20 +223,7 @@ backup_snapshot() {
       forceSharedWrite="-U"
     fi
 
-    # Is the snapshot a whole file clone?
-    if [[ $snapshotname =~ .*-snapshot-.* ]]
-    then
-      local snapshotFile=`dirname $disk`/$snapshotname
-      cp $snapshotFile $destPath/$destName
-      if [ $? -gt 0 ]
-      then
-        printf "Unable to copy snapshot file ${snapshotFile}" >&2
-        return 1
-      fi
-      return 0
-    fi
-
-    if [[ $snapshotname =~ .*\.snapshot.* ]]
+    if [[ $snapshotname =~ \/\.snapshot.* ]]
     then
       local snapshotFile=`dirname $disk`$snapshotname
       cp $snapshotFile $destPath/$destName
