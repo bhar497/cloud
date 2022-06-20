@@ -877,10 +877,10 @@ public class KVMStorageProcessor implements StorageProcessor {
         final int index = snapshot.getPath().lastIndexOf("/");
         final boolean isCreatedFromVmSnapshot = (index == -1) ? true: false; // -1 means the snapshot is created from existing vm snapshot
         String snapshotName = snapshot.getPath().substring(index + 1);
+        String descName = snapshotName;
         if (snapshot.getPath().startsWith("/.snapshot")) {
             snapshotName = snapshot.getPath();
         }
-        String descName = snapshotName;
         final String volumePath = snapshot.getVolume().getPath();
         String snapshotDestPath = null;
         String snapshotRelPath = null;
