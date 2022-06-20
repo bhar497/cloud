@@ -880,6 +880,7 @@ public class KVMStorageProcessor implements StorageProcessor {
         String descName = snapshotName;
         if (snapshot.getPath().startsWith("/.snapshot")) {
             snapshotName = snapshot.getPath();
+            descName = UUID.randomUUID().toString();
         }
         final String volumePath = snapshot.getVolume().getPath();
         String snapshotDestPath = null;
