@@ -875,13 +875,15 @@ public class KVMStorageProcessor implements StorageProcessor {
         final String secondaryStoragePoolUrl = nfsImageStore.getUrl();
         // NOTE: snapshot name is encoded in snapshot path
         final int index = snapshot.getPath().lastIndexOf("/");
-        final boolean isCreatedFromVmSnapshot = (index == -1) ? true: false; // -1 means the snapshot is created from existing vm snapshot
+        final boolean isCreatedFromVmSnapshot = index == -1; // -1 means the snapshot is created from existing vm snapshot
+        boolean skipRemoveSnapshot = isCreatedFromVmSnapshot;
         String snapshotName = snapshot.getPath().substring(index + 1);
         String descName = snapshotName;
         // This signifies that it is an ONTAP plugin snapshot, so we change our behavior here
         if (snapshot.getPath().startsWith("/.snapshot")) {
             snapshotName = snapshot.getPath();
             descName = UUID.randomUUID().toString();
+            skipRemoveSnapshot = true;
         }
         final String volumePath = snapshot.getVolume().getPath();
         String snapshotDestPath = null;
@@ -980,9 +982,9 @@ public class KVMStorageProcessor implements StorageProcessor {
             s_logger.debug("Failed to backup snapshot: ", e);
             return new CopyCmdAnswer(e.toString());
         } finally {
-            if (isCreatedFromVmSnapshot) {
-                s_logger.debug("Ignoring removal of vm snapshot on primary as this snapshot is created from vm snapshot");
-            } else if (!snapshotName.startsWith("/.snapshot")) {
+            if (skipRemoveSnapshot) {
+                s_logger.debug("Ignoring removal of vm snapshot on primary");
+            } else {
                 try {
                     /* Delete the snapshot on primary */
                     DomainInfo.DomainState state = null;
@@ -1032,8 +1034,6 @@ public class KVMStorageProcessor implements StorageProcessor {
                 } catch (final Exception ex) {
                     s_logger.error("Failed to delete snapshots on primary", ex);
                 }
-            } else {
-                s_logger.debug("Ignoring removal of snapshot because this was created by ONTAP plugin");
             }
 
         try {
