@@ -18,6 +18,7 @@ package com.cloud.acl;
 
 import javax.inject.Inject;
 
+import org.apache.cloudstack.query.QueryService;
 import org.springframework.stereotype.Component;
 
 import org.apache.cloudstack.acl.ControlledEntity;
@@ -127,6 +128,10 @@ public class DomainChecker extends AdapterBase implements SecurityChecker {
                         if (owner.getType() != Account.ACCOUNT_TYPE_PROJECT || !(_projectMgr.canAccessProjectAccount(caller, owner.getId()))) {
                             throw new PermissionDeniedException("Domain Admin and regular users can modify only their own Public templates");
                         }
+                    }
+                } else if (QueryService.RestrictPublicTemplateAccessToDomain.value()) {
+                    if (!_domainDao.isChildDomain(owner.getDomainId(), caller.getDomainId())) {
+                        throw new PermissionDeniedException(caller + " is not allowed to access template " + template);
                     }
                 }
             }
