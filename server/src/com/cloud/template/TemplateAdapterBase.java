@@ -171,14 +171,14 @@ public abstract class TemplateAdapterBase extends AdapterBase implements Templat
             sshkeyEnabled = Boolean.FALSE;
         }
 
-        boolean isAdmin = _accountMgr.isRootAdmin(templateOwner.getId());
+        boolean isRootAdmin = _accountMgr.isRootAdmin(templateOwner.getId());
         boolean isRegionStore = false;
         List<ImageStoreVO> stores = _imgStoreDao.findRegionImageStores();
         if (stores != null && stores.size() > 0) {
             isRegionStore = true;
         }
 
-        if (!isAdmin && zoneIdList == null && !isRegionStore ) {
+        if (!isRootAdmin && zoneIdList == null && !isRegionStore ) {
             // domain admin and user should also be able to register template on a region store
             throw new InvalidParameterValueException("Please specify a valid zone Id. Only admins can create templates in all zones.");
         }
@@ -190,11 +190,12 @@ public abstract class TemplateAdapterBase extends AdapterBase implements Templat
 
         // check whether owner can create public templates
         boolean allowPublicUserTemplates = TemplateManager.AllowPublicUserTemplates.valueIn(templateOwner.getId());
+        boolean isAdmin = _accountMgr.isAdmin(templateOwner.getId());
         if (!isAdmin && !allowPublicUserTemplates && isPublic) {
             throw new InvalidParameterValueException("Only private templates/ISO can be created.");
         }
 
-        if (!isAdmin || featured == null) {
+        if (!isRootAdmin || featured == null) {
             featured = Boolean.FALSE;
         }
 
