@@ -3166,7 +3166,7 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
                 sc.addAnd("domainPath", SearchCriteria.Op.LIKE, domain.getPath() + "%");
             }
 
-            boolean publicTemplates = (templateFilter == TemplateFilter.featured || templateFilter == TemplateFilter.community || templateFilter == TemplateFilter.all);
+            boolean publicTemplates = (templateFilter == TemplateFilter.featured || templateFilter == TemplateFilter.community || templateFilter == TemplateFilter.all || templateFilter == TemplateFilter.executable);
             List<Long> relatedDomainIds = new ArrayList<Long>();
             List<Long> permittedAccountIds = new ArrayList<Long>();
             if (!permittedAccounts.isEmpty()) {
@@ -3232,7 +3232,7 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
             }
 
             SearchCriteria<TemplateJoinVO> sc_public = _templateJoinDao.createSearchCriteria();
-            if (templateFilter == TemplateFilter.featured || templateFilter == TemplateFilter.community || templateFilter == TemplateFilter.all || templateFilter == TemplateFilter.executable) {
+            if (publicTemplates) {
                 sc_public.addAnd("publicTemplate", SearchCriteria.Op.EQ, true);
 
                 if (RestrictPublicTemplateAccessToDomain.value() && !relatedDomainIds.isEmpty()) {
