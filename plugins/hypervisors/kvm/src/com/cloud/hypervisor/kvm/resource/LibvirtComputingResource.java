@@ -2193,8 +2193,19 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (params != null && params.get("nicAdapter") != null && !params.get("nicAdapter").isEmpty()) {
             nicAdapter = params.get("nicAdapter");
         }
-        for (final NicTO nic : vmSpec.getNics()) {
-            createVif(vm, nic, nicAdapter, vmSpec.getCpus());
+        if (vmSpec.getType() == VirtualMachine.Type.User) {
+            for (final NicTO nic : vmSpec.getNics()) {
+                createVif(vm, nic, nicAdapter, vmSpec.getCpus());
+            }
+        } else {
+            final NicTO[] nics = vmSpec.getNics();
+            for (int i = 0; i < nics.length; i++) {
+                for (final NicTO nic : vmSpec.getNics()) {
+                    if (nic.getDeviceId() == i) {
+                        createVif(vm, nic, nicAdapter, vmSpec.getCpus());
+                    }
+                }
+            }
         }
     }
 
