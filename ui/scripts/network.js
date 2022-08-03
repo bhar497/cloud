@@ -718,14 +718,48 @@
                                     },
                                     account: {
                                         label: 'label.account',
+                                        dependsOn: 'domain',
                                         validation: {
                                             required: true
                                         },
-                                        isHidden: function(args) {
-                                            if (isAdmin() || isDomainAdmin())
-                                                return false;
-                                            else
-                                                return true;
+                                        select: function(args) {
+                                            if ((!isAdmin() && !isDomainAdmin()) || args.domain == null || args.domain == "") {
+                                                var $form = args.$select.closest('form');
+                                                $form.find('.form-item[rel=account]').hide();
+                                                args.response.success({
+                                                    data: null
+                                                });
+                                            } else {
+                                                var dataObj = {
+                                                    domainId: args.domain,
+                                                    state: 'Enabled',
+                                                    listAll: false,
+                                                };
+                                                $.ajax({
+                                                    url: createURL('listAccounts', {
+                                                        ignoreProject: true
+                                                    }),
+                                                    data: dataObj,
+                                                    success: function(json) {
+                                                        accountObjs = json.listaccountsresponse.account;
+                                                        var items = [{
+                                                            id: null,
+                                                            description: ''
+                                                        }];
+                                                        $(accountObjs).each(function() {
+                                                            items.push({
+                                                                id: this.name,
+                                                                description: this.name
+                                                            });
+                                                        })
+                                                        var $form = args.$select.closest('form');
+                                                        $form.find('.form-item[rel=account]').css('display', 'inline-block');
+                                                        args.response.success({
+                                                            data: items
+                                                        });
+                                                    }
+                                                });
+                                            }
                                         }
                                     }
                                 }
@@ -927,11 +961,48 @@
 
                         account: {
                             label: 'label.account',
+                            dependsOn: 'domainid',
                             isHidden: function(args) {
                                 if (isAdmin() || isDomainAdmin())
                                     return false;
                                 else
                                     return true;
+                            },
+                            select: function(args) {
+                                if (args.domainid == null || args.domainid == "") {
+                                    args.response.success({
+                                        data: null
+                                    });
+                                } else {
+                                    var dataObj = {
+                                        domainId: args.domainid,
+                                        state: 'Enabled',
+                                        listAll: false,
+                                    };
+                                    $.ajax({
+                                        url: createURL('listAccounts', {
+                                            ignoreProject: true
+                                        }),
+                                        data: dataObj,
+                                        success: function(json) {
+                                            accountObjs = json.listaccountsresponse.account;
+                                            var items = [{
+                                                id: null,
+                                                description: ''
+                                            }];
+                                            $(accountObjs).each(function() {
+                                                items.push({
+                                                    id: this.name,
+                                                    description: this.name
+                                                });
+                                            })
+
+                                            args.response.success({
+                                                data: items
+                                            });
+                                        }
+                                    });
+                                }
                             }
                         },
                         tagKey: {
@@ -5158,9 +5229,21 @@
                 type: 'select',
                 title: 'label.vpc',
                 id: 'vpc',
+                preFilter: function(args) {
+                    if (isAdmin() || isDomainAdmin()) {
+                        return []
+                    }
+                    return ['account']
+                },
                 listView: {
                     id: 'vpc',
                     label: 'label.vpc',
+                    preFilter: function(args) {
+                        if (isAdmin() || isDomainAdmin()) {
+                            return []
+                        }
+                        return ['account']
+                    },
                     fields: {
                         name: {
                             label: 'label.name'
@@ -5175,6 +5258,9 @@
                         },
                         cidr: {
                             label: 'label.cidr'
+                        },
+                        account: {
+                            label: 'label.account'
                         },
                         state: {
                             label: 'label.state',
@@ -5261,11 +5347,48 @@
 
                         account: {
                             label: 'label.account',
+                            dependsOn: 'domainid',
                             isHidden: function(args) {
                                 if (isAdmin() || isDomainAdmin())
                                     return false;
                                 else
                                     return true;
+                            },
+                            select: function(args) {
+                                if (args.domainid == null || args.domainid == "") {
+                                    args.response.success({
+                                        data: null
+                                    });
+                                } else {
+                                    var dataObj = {
+                                        domainId: args.domainid,
+                                        state: 'Enabled',
+                                        listAll: false,
+                                    };
+                                    $.ajax({
+                                        url: createURL('listAccounts', {
+                                            ignoreProject: true
+                                        }),
+                                        data: dataObj,
+                                        success: function(json) {
+                                            accountObjs = json.listaccountsresponse.account;
+                                            var items = [{
+                                                id: null,
+                                                description: ''
+                                            }];
+                                            $(accountObjs).each(function() {
+                                                items.push({
+                                                    id: this.name,
+                                                    description: this.name
+                                                });
+                                            })
+
+                                            args.response.success({
+                                                data: items
+                                            });
+                                        }
+                                    });
+                                }
                             }
                         },
                         tagKey: {
@@ -5384,20 +5507,20 @@
                                         validation: {
                                             required: true
                                         },
-                                        select: function(args) {
+                                        select: function (args) {
                                             var data = {
                                                 zoneid: args.zoneid
                                             };
                                             $.ajax({
                                                 url: createURL('listVPCOfferings'),
                                                 data: data,
-                                                success: function(json) {
-                                                    var offerings  = json.listvpcofferingsresponse.vpcoffering ? json.listvpcofferingsresponse.vpcoffering : [];
-                                                    var filteredofferings = $.grep(offerings, function(offering) {
+                                                success: function (json) {
+                                                    var offerings = json.listvpcofferingsresponse.vpcoffering ? json.listvpcofferingsresponse.vpcoffering : [];
+                                                    var filteredofferings = $.grep(offerings, function (offering) {
                                                         return offering.state == 'Enabled';
                                                     });
                                                     args.response.success({
-                                                        data: $.map(filteredofferings, function(vpco) {
+                                                        data: $.map(filteredofferings, function (vpco) {
                                                             return {
                                                                 id: vpco.id,
                                                                 description: vpco.name
@@ -5406,6 +5529,92 @@
                                                     });
                                                 }
                                             });
+                                        }
+                                    },
+                                    domain: {
+                                        label: 'label.domain',
+                                        isHidden: function(args) {
+                                            if (isAdmin() || isDomainAdmin())
+                                                return false;
+                                            else
+                                                return true;
+                                        },
+                                        select: function(args) {
+                                            if (isAdmin() || isDomainAdmin()) {
+                                                $.ajax({
+                                                    url: createURL("listDomains&listAll=true"),
+                                                    success: function(json) {
+                                                        var items = [];
+                                                        items.push({
+                                                            id: "",
+                                                            description: ""
+                                                        });
+                                                        var domainObjs = json.listdomainsresponse.domain;
+                                                        $(domainObjs).each(function() {
+                                                            items.push({
+                                                                id: this.id,
+                                                                description: this.path
+                                                            });
+                                                        });
+                                                        items.sort(function(a, b) {
+                                                            return a.description.localeCompare(b.description);
+                                                        });
+                                                        args.response.success({
+                                                            data: items
+                                                        });
+                                                    }
+                                                });
+                                            } else {
+                                                args.response.success({
+                                                    data: null
+                                                });
+                                            }
+                                        }
+                                    },
+                                    account: {
+                                        label: 'label.account',
+                                        dependsOn: 'domain',
+                                        validation: {
+                                            required: true
+                                        },
+                                        select: function(args) {
+                                            if ((!isAdmin() && !isDomainAdmin()) || args.domain == null || args.domain == "") {
+                                                var $form = args.$select.closest('form');
+                                                $form.find('.form-item[rel=account]').hide();
+                                                args.response.success({
+                                                    data: null
+                                                });
+                                            } else {
+                                                var dataObj = {
+                                                    domainId: args.domain,
+                                                    state: 'Enabled',
+                                                    listAll: false,
+                                                };
+                                                $.ajax({
+                                                    url: createURL('listAccounts', {
+                                                        ignoreProject: true
+                                                    }),
+                                                    data: dataObj,
+                                                    success: function(json) {
+                                                        accountObjs = json.listaccountsresponse.account;
+                                                        var items = [{
+                                                            id: null,
+                                                            description: ''
+                                                        }];
+                                                        $(accountObjs).each(function() {
+                                                            items.push({
+                                                                id: this.name,
+                                                                description: this.name
+                                                            });
+                                                        })
+                                                        var $form = args.$select.closest('form');
+                                                        $form.find('.form-item[rel=account]').css('display', 'inline-block');
+                                                        args.response.success({
+                                                            data: items
+                                                        });
+                                                    }
+                                                });
+                                            }
                                         }
                                     }
                                 }
@@ -5424,7 +5633,16 @@
                                     $.extend(dataObj, {
                                         networkdomain: args.data.networkdomain
                                     });
-
+                                if (args.data.domain != null && args.data.domain.length > 0) {
+                                        $.extend(dataObj, {
+                                            domainid: args.data.domain
+                                        });
+                                        if (args.data.account != null && args.data.account.length > 0) {
+                                            $.extend(dataObj, {
+                                                account: args.data.account
+                                            });
+                                        }
+                                    }
                                 $.ajax({
                                     url: createURL("createVPC"),
                                     dataType: "json",
@@ -5814,6 +6032,12 @@
                 listView: {
                     id: 'vpnCustomerGateway',
                     label: 'label.vpn.customer.gateway',
+                    preFilter: function(args) {
+                        if (isAdmin() || isDomainAdmin()) {
+                            return []
+                        }
+                        return ['account']
+                    },
                     fields: {
                         name: {
                             label: 'label.name'
@@ -5826,12 +6050,38 @@
                         },
                         ipsecpsk: {
                             label: 'label.IPsec.preshared.key'
+                        },
+                        account: {
+                            label: 'label.account'
                         }
                     },
 
                     advSearchFields: {
                         keyword: {
                             label: 'label.name'
+                        },
+                        zoneid: {
+                            label: 'label.zone',
+                            select: function(args) {
+                                $.ajax({
+                                    url: createURL('listZones'),
+                                    data: {
+                                        listAll: true
+                                    },
+                                    success: function(json) {
+                                        var zones = json.listzonesresponse.zone ? json.listzonesresponse.zone : [];
+
+                                        args.response.success({
+                                            data: $.map(zones, function(zone) {
+                                                return {
+                                                    id: zone.id,
+                                                    description: zone.name
+                                                };
+                                            })
+                                        });
+                                    }
+                                });
+                            }
                         },
                         domainid: {
                             label: 'label.domain',
@@ -5879,13 +6129,56 @@
                             }
                         },
                         account: {
-                            label: 'Account',
+                            label: 'label.account',
+                            dependsOn: 'domainid',
                             isHidden: function(args) {
                                 if (isAdmin() || isDomainAdmin())
                                     return false;
                                 else
                                     return true;
+                            },
+                            select: function(args) {
+                                if (args.domainid == null || args.domainid == "") {
+                                    args.response.success({
+                                        data: null
+                                    });
+                                } else {
+                                    var dataObj = {
+                                        domainId: args.domainid,
+                                        state: 'Enabled',
+                                        listAll: false,
+                                    };
+                                    $.ajax({
+                                        url: createURL('listAccounts', {
+                                            ignoreProject: true
+                                        }),
+                                        data: dataObj,
+                                        success: function(json) {
+                                            accountObjs = json.listaccountsresponse.account;
+                                            var items = [{
+                                                id: null,
+                                                description: ''
+                                            }];
+                                            $(accountObjs).each(function() {
+                                                items.push({
+                                                    id: this.name,
+                                                    description: this.name
+                                                });
+                                            })
+
+                                            args.response.success({
+                                                data: items
+                                            });
+                                        }
+                                    });
+                                }
                             }
+                        },
+                        tagKey: {
+                            label: 'label.tag.key'
+                        },
+                        tagValue: {
+                            label: 'label.tag.value'
                         }
                     },
 
@@ -6216,6 +6509,94 @@
                                         docID: 'helpVPNGatewaySplitConnections',
                                         isBoolean: true,
                                         isChecked: false
+                                    },
+
+                                    domain: {
+                                        label: 'label.domain',
+                                        isHidden: function(args) {
+                                            if (isAdmin() || isDomainAdmin())
+                                                return false;
+                                            else
+                                                return true;
+                                        },
+                                        select: function(args) {
+                                            if (isAdmin() || isDomainAdmin()) {
+                                                $.ajax({
+                                                    url: createURL("listDomains&listAll=true"),
+                                                    success: function(json) {
+                                                        var items = [];
+                                                        items.push({
+                                                            id: "",
+                                                            description: ""
+                                                        });
+                                                        var domainObjs = json.listdomainsresponse.domain;
+                                                        $(domainObjs).each(function() {
+                                                            items.push({
+                                                                id: this.id,
+                                                                description: this.path
+                                                            });
+                                                        });
+                                                        items.sort(function(a, b) {
+                                                            return a.description.localeCompare(b.description);
+                                                        });
+                                                        args.response.success({
+                                                            data: items
+                                                        });
+                                                    }
+                                                });
+                                            } else {
+                                                args.response.success({
+                                                    data: null
+                                                });
+                                            }
+                                        }
+                                    },
+
+                                    account: {
+                                        label: 'label.account',
+                                        dependsOn: 'domain',
+                                        validation: {
+                                            required: true
+                                        },
+                                        select: function(args) {
+                                            if ((!isAdmin() && !isDomainAdmin()) || args.domain == null || args.domain == "") {
+                                                var $form = args.$select.closest('form');
+                                                $form.find('.form-item[rel=account]').hide();
+                                                args.response.success({
+                                                    data: null
+                                                });
+                                            } else {
+                                                var dataObj = {
+                                                    domainId: args.domain,
+                                                    state: 'Enabled',
+                                                    listAll: false,
+                                                };
+                                                $.ajax({
+                                                    url: createURL('listAccounts', {
+                                                        ignoreProject: true
+                                                    }),
+                                                    data: dataObj,
+                                                    success: function(json) {
+                                                        accountObjs = json.listaccountsresponse.account;
+                                                        var items = [{
+                                                            id: null,
+                                                            description: ''
+                                                        }];
+                                                        $(accountObjs).each(function() {
+                                                            items.push({
+                                                                id: this.name,
+                                                                description: this.name
+                                                            });
+                                                        })
+                                                        var $form = args.$select.closest('form');
+                                                        $form.find('.form-item[rel=account]').css('display', 'inline-block');
+                                                        args.response.success({
+                                                            data: items
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                        }
                                     }
                                 }
                             },
@@ -6248,6 +6629,17 @@
                                 $.extend(data, {
                                     esppolicy: esppolicy
                                 });
+
+                                if (args.data.domain != null && args.data.domain.length > 0) {
+                                    $.extend(data, {
+                                        domainid: args.data.domain
+                                    });
+                                    if (args.data.account != null && args.data.account.length > 0) {
+                                        $.extend(data, {
+                                            account: args.data.account
+                                        });
+                                    }
+                                }
 
                                 $.ajax({
                                     url: createURL('createVpnCustomerGateway'),
@@ -6660,11 +7052,136 @@
                         username: {
                             label: 'label.name'
                         },
-                        domain: {
-                            label: 'label.domain'
+                        account: {
+                            label: 'label.account'
                         },
                         state: {
                             label: 'label.state'
+                        },
+                    },
+
+                    advSearchFields: {
+                        zoneid: {
+                            label: 'label.zone',
+                            select: function(args) {
+                                $.ajax({
+                                    url: createURL('listZones'),
+                                    data: {
+                                        listAll: true
+                                    },
+                                    success: function(json) {
+                                        var zones = json.listzonesresponse.zone ? json.listzonesresponse.zone : [];
+
+                                        args.response.success({
+                                            data: $.map(zones, function(zone) {
+                                                return {
+                                                    id: zone.id,
+                                                    description: zone.name
+                                                };
+                                            })
+                                        });
+                                    }
+                                });
+                            }
+                        },
+
+                        domainid: {
+                            label: 'label.domain',
+                            select: function(args) {
+                                if (isAdmin() || isDomainAdmin()) {
+                                    $.ajax({
+                                        url: createURL('listDomains'),
+                                        data: {
+                                            listAll: true,
+                                            details: 'min'
+                                        },
+                                        success: function(json) {
+                                            var array1 = [{
+                                                id: '',
+                                                description: ''
+                                            }];
+                                            var domains = json.listdomainsresponse.domain;
+                                            if (domains != null && domains.length > 0) {
+                                                for (var i = 0; i < domains.length; i++) {
+                                                    array1.push({
+                                                        id: domains[i].id,
+                                                        description: domains[i].path
+                                                    });
+                                                }
+                                            }
+                                            array1.sort(function(a, b) {
+                                                return a.description.localeCompare(b.description);
+                                            });
+                                            args.response.success({
+                                                data: array1
+                                            });
+                                        }
+                                    });
+                                } else {
+                                    args.response.success({
+                                        data: null
+                                    });
+                                }
+                            },
+                            isHidden: function(args) {
+                                if (isAdmin() || isDomainAdmin())
+                                    return false;
+                                else
+                                    return true;
+                            }
+                        },
+
+                        account: {
+                            label: 'label.account',
+                            dependsOn: 'domainid',
+                            isHidden: function(args) {
+                                if (isAdmin() || isDomainAdmin())
+                                    return false;
+                                else
+                                    return true;
+                            },
+                            select: function(args) {
+                                if (args.domainid == null || args.domainid == "") {
+                                    args.response.success({
+                                        data: null
+                                    });
+                                } else {
+                                    var dataObj = {
+                                        domainId: args.domainid,
+                                        state: 'Enabled',
+                                        listAll: false,
+                                    };
+                                    $.ajax({
+                                        url: createURL('listAccounts', {
+                                            ignoreProject: true
+                                        }),
+                                        data: dataObj,
+                                        success: function(json) {
+                                            accountObjs = json.listaccountsresponse.account;
+                                            var items = [{
+                                                id: null,
+                                                description: ''
+                                            }];
+                                            $(accountObjs).each(function() {
+                                                items.push({
+                                                    id: this.name,
+                                                    description: this.name
+                                                });
+                                            })
+
+                                            args.response.success({
+                                                data: items
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+                        },
+                        tagKey: {
+                            label: 'label.tag.key'
+                        },
+                        tagValue: {
+                            label: 'label.tag.value'
                         }
                     },
 
@@ -6686,40 +7203,6 @@
                     },
 
                     actions:{
-                        destroy: {
-                            label: 'label.action.delete.user',
-                            messages: {
-                                confirm: function(args) {
-                                    return 'message.action.delete.vpn.user'
-                                },
-                                notification: function(args) {
-                                    return 'label.delete.vpn.user'
-                                }
-                            },
-                            action: function(args) {
-                                $.ajax({
-                                    url: createURL('removeVpnUser'),
-                                    data: {
-                                        domainid: args.context.vpnuser[0].domainid,
-                                        account: args.context.vpnuser[0].account,
-                                        username: args.context.vpnuser[0].username
-                                    },
-                                    dataType: 'json',
-                                    async: true,
-                                    success: function(json) {
-                                        var jobID = json.removevpnuserresponse.jobid;
-                                        args.response.success({
-                                            _custom: {
-                                                jobId: jobID
-                                            }
-                                        });
-                                    }
-                                });
-                            },
-                            notification: {
-                                poll: pollAsyncJobResult
-                            }
-                        },
                         add: {
                             label: 'label.add.user',
                             messages: {
@@ -6778,14 +7261,6 @@
                                                         });
                                                     }
                                                 });
-                                                args.$select.change(function() {
-                                                    var $form = $(this).closest('form');
-                                                    if ($(this).val() == "") {
-                                                        $form.find('.form-item[rel=account]').hide();
-                                                    } else {
-                                                        $form.find('.form-item[rel=account]').css('display', 'inline-block');
-                                                    }
-                                                });
                                             } else {
                                                 args.response.success({
                                                     data: null
@@ -6795,14 +7270,47 @@
                                     },
                                     account: {
                                         label: 'label.account',
+                                        dependsOn: 'domain',
                                         validation: {
                                             required: true
                                         },
-                                        isHidden: function(args) {
-                                            if (isAdmin() || isDomainAdmin()) {
-                                                return false;
+                                        select: function(args) {
+                                            if ((!isAdmin() && !isDomainAdmin()) || args.domain == null || args.domain == "") {
+                                                var $form = args.$select.closest('form');
+                                                $form.find('.form-item[rel=account]').hide();
+                                                args.response.success({
+                                                    data: null
+                                                });
                                             } else {
-                                                return true;
+                                                var dataObj = {
+                                                    domainId: args.domain,
+                                                    state: 'Enabled',
+                                                    listAll: false,
+                                                };
+                                                $.ajax({
+                                                    url: createURL('listAccounts', {
+                                                        ignoreProject: true
+                                                    }),
+                                                    data: dataObj,
+                                                    success: function(json) {
+                                                        accountObjs = json.listaccountsresponse.account;
+                                                        var items = [{
+                                                            id: null,
+                                                            description: ''
+                                                        }];
+                                                        $(accountObjs).each(function() {
+                                                            items.push({
+                                                                id: this.name,
+                                                                description: this.name
+                                                            });
+                                                        })
+                                                        var $form = args.$select.closest('form');
+                                                        $form.find('.form-item[rel=account]').css('display', 'inline-block');
+                                                        args.response.success({
+                                                            data: items
+                                                        });
+                                                    }
+                                                });
                                             }
                                         }
                                     }
@@ -6840,7 +7348,7 @@
                                                 }
                                             }
                                         });
-                                    }
+                                    },
                                 });
                             },
                             notification: {
