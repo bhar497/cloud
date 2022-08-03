@@ -64,6 +64,7 @@ public final class LibvirtPlugNicCommandWrapper extends CommandWrapper<PlugNicCo
             }
             final VifDriver vifDriver = libvirtComputingResource.getVifDriver(nic.getType(), nic.getName());
             final InterfaceDef interfaceDef = vifDriver.plug(nic, "Other PV", "", null);
+            interfaceDef.setQueues(vm.getMaxVcpus());
             vm.attachDevice(interfaceDef.toString());
 
             // apply default network rules on new nic

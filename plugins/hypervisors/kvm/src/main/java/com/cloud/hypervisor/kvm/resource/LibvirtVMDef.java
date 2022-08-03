@@ -1160,6 +1160,7 @@ public class LibvirtVMDef {
         private String _dpdkSourcePort;
         private String _dpdkExtraLines;
         private String _interfaceMode;
+        private Integer queues = 0;
 
         public void defBridgeNet(String brName, String targetBrName, String macAddr, NicModel model) {
             defBridgeNet(brName, targetBrName, macAddr, model, 0);
@@ -1334,6 +1335,14 @@ public class LibvirtVMDef {
             _interfaceMode = mode;
         }
 
+        public void setQueues(int queues) {
+            this.queues = queues;
+        }
+
+        public int getQueues() {
+            return this.queues;
+        }
+
         public String getContent() {
             StringBuilder netBuilder = new StringBuilder();
             if (_netType == GuestNetType.BRIDGE) {
@@ -1388,6 +1397,10 @@ public class LibvirtVMDef {
 
             if (_slot  != null) {
                 netBuilder.append(String.format("<address type='pci' domain='0x0000' bus='0x00' slot='0x%02x' function='0x0'/>\n", _slot));
+            }
+
+            if (_model == NicModel.VIRTIO && queues > 0) {
+                netBuilder.append(String.format("<driver queues='%d'/>\n", queues));
             }
             return netBuilder.toString();
         }

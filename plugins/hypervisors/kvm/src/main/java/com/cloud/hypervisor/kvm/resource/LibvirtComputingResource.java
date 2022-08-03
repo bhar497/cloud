@@ -1831,7 +1831,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
 
         final Domain vm = getDomain(conn, vmName);
-        vm.attachDevice(getVifDriver(nicTO.getType()).plug(nicTO, "Other PV", "", null).toString());
+        InterfaceDef nic = getVifDriver(nicTO.getType()).plug(nicTO, "Other PV", "", null);
+        nic.setQueues(vm.getMaxVcpus());
+        vm.attachDevice(nic.toString());
     }
 
 
@@ -2452,7 +2454,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         for (int i = 0; i < nics.length; i++) {
             for (final NicTO nic : vmSpec.getNics()) {
                 if (nic.getDeviceId() == i) {
-                    createVif(vm, nic, nicAdapter, extraConfig);
+                    createVif(vm, nic, nicAdapter, extraConfig, vmSpec.getCpus());
                 }
             }
         }
@@ -2719,12 +2721,14 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
     }
 
-    private void createVif(final LibvirtVMDef vm, final NicTO nic, final String nicAdapter, Map<String, String> extraConfig) throws InternalErrorException, LibvirtException {
+    private void createVif(final LibvirtVMDef vm, final NicTO nic, final String nicAdapter, Map<String, String> extraConfig, int queues) throws InternalErrorException, LibvirtException {
         if (vm.getDevices() == null) {
             s_logger.error("LibvirtVMDef object get devices with null result");
             throw new InternalErrorException("LibvirtVMDef object get devices with null result");
         }
-        vm.getDevices().addDevice(getVifDriver(nic.getType(), nic.getName()).plug(nic, vm.getPlatformEmulator(), nicAdapter, extraConfig));
+        InterfaceDef device = getVifDriver(nic.getType(), nic.getName()).plug(nic, vm.getPlatformEmulator(), nicAdapter, extraConfig);
+        device.setQueues(queues);
+        vm.getDevices().addDevice(device);
     }
 
     public boolean cleanupDisk(Map<String, String> volumeToDisconnect) {
