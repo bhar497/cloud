@@ -34,6 +34,7 @@ import com.cloud.utils.StringUtils;
 import com.cloud.utils.db.Filter;
 import com.cloud.utils.fsm.StateMachine2;
 
+import org.apache.cloudstack.cluster.ClusterDrainingManager;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.log4j.Logger;
@@ -170,6 +171,7 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
     protected VMReservationDao _reservationDao;
     @Inject
     HostDetailsDao _hostDetailsDao;
+    protected ClusterDrainingManager _clusterDrainingManager;
 
     private static final long INITIAL_RESERVATION_RELEASE_CHECKER_DELAY = 30L * 1000L; // thirty seconds expressed in milliseconds
     protected long _nodeId = -1;
@@ -279,6 +281,8 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
 
         String haVmTag = (String)vmProfile.getParameter(VirtualMachineProfile.Param.HaTag);
         String uefiFlag = (String)vmProfile.getParameter(VirtualMachineProfile.Param.UefiFlag);
+
+        _clusterDrainingManager.addDrainingToAvoids(dc, avoids);
 
         if (plan.getHostId() != null && haVmTag == null) {
             Long hostIdSpecified = plan.getHostId();

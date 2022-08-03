@@ -16,6 +16,7 @@
 // under the License.
 package org.apache.cloudstack.api.command.user.vm;
 
+import com.cloud.exception.ResourceAllocationException;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.acl.SecurityChecker.AccessType;
@@ -117,7 +118,7 @@ public class ResetVMPasswordCmd extends BaseAsyncCmd implements UserCmd {
     }
 
     @Override
-    public void execute() throws ResourceUnavailableException, InsufficientCapacityException {
+    public void execute() throws ResourceUnavailableException, InsufficientCapacityException, ResourceAllocationException {
         password = _mgr.generateRandomPassword();
         CallContext.current().setEventDetails("Vm Id: " + getId());
         UserVm result = _userVmService.resetVMPassword(this, password);

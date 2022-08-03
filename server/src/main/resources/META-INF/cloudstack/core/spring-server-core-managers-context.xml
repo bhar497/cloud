@@ -317,4 +317,5 @@
         <property name="affinityGroupProcessors"
                   value="#{affinityProcessorsRegistry.registered}" />
     </bean>
+    <bean id="clusterDrainingManager" class="org.apache.cloudstack.cluster.ClusterDrainingManagerImpl" />
 </beans>

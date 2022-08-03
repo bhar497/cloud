@@ -17,6 +17,7 @@
 
 package org.apache.cloudstack.api.command.user.vm;
 
+import com.cloud.exception.ResourceAllocationException;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.acl.SecurityChecker.AccessType;
@@ -138,7 +139,7 @@ public class ResetVMSSHKeyCmd extends BaseAsyncCmd implements UserCmd {
     }
 
     @Override
-    public void execute() throws ResourceUnavailableException, InsufficientCapacityException {
+    public void execute() throws ResourceUnavailableException, InsufficientCapacityException, ResourceAllocationException {
 
         CallContext.current().setEventDetails("Vm Id: " + getId());
         UserVm result = _userVmService.resetVMSSHKey(this);

@@ -152,6 +152,7 @@ import org.apache.cloudstack.backup.Backup;
 import org.apache.cloudstack.backup.BackupOffering;
 import org.apache.cloudstack.backup.BackupSchedule;
 import org.apache.cloudstack.backup.dao.BackupOfferingDao;
+import org.apache.cloudstack.cluster.ClusterDrainingManager;
 import org.apache.cloudstack.config.Configuration;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataStore;
@@ -391,6 +392,8 @@ public class ApiResponseHelper implements ResponseGenerator {
     private VMSnapshotDao vmSnapshotDao;
     @Inject
     private BackupOfferingDao backupOfferingDao;
+    @Inject
+    protected ClusterDrainingManager _clusterDrainingManager;
 
     @Override
     public UserResponse createUserResponse(User user) {
@@ -1196,7 +1199,10 @@ public class ApiResponseHelper implements ResponseGenerator {
         }
         clusterResponse.setHypervisorType(cluster.getHypervisorType().toString());
         clusterResponse.setClusterType(cluster.getClusterType().toString());
-        clusterResponse.setAllocationState(cluster.getAllocationState().toString());
+        if (_clusterDrainingManager.isClusterDraining(cluster))
+            clusterResponse.setAllocationState("Draining");
+        else
+            clusterResponse.setAllocationState(cluster.getAllocationState().toString());
         clusterResponse.setManagedState(cluster.getManagedState().toString());
         String cpuOvercommitRatio = ApiDBUtils.findClusterDetails(cluster.getId(), "cpuOvercommitRatio");
         String memoryOvercommitRatio = ApiDBUtils.findClusterDetails(cluster.getId(), "memoryOvercommitRatio");
