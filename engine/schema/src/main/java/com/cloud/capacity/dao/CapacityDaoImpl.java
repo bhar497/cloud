@@ -926,7 +926,6 @@ public class CapacityDaoImpl extends GenericDaoBase<CapacityVO, Long> implements
              if (clusterId != null) {
                  pstmt.setLong(index, clusterId);
              }
-
              ResultSet rs = pstmt.executeQuery();
              while (rs.next()) {
                  result.add(rs.getLong(1));

@@ -23,6 +23,8 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import com.cloud.capacity.Capacity;
+import com.cloud.capacity.dao.CapacityDao;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
