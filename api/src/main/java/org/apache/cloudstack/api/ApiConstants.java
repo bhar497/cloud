@@ -778,6 +778,7 @@ public class ApiConstants {
     public static final String HAS_ANNOTATION = "hasannotation";
     public static final String LAST_ANNOTATED = "lastannotated";
     public static final String LDAP_DOMAIN = "ldapdomain";
+    public static final String BOOT_DELAY = "bootdelay";
 
     public static final String STDOUT = "stdout";
     public static final String STDERR = "stderr";

@@ -107,6 +107,7 @@ public class LibvirtVMDef {
         public static final String GUEST_NVRAM_PATH = "guest.nvram.path";
         public static final String GUEST_NVRAM_TEMPLATE_SECURE = "guest.nvram.template.secure";
         public static final String GUEST_NVRAM_TEMPLATE_LEGACY = "guest.nvram.template.legacy";
+        private Integer _bootDelay = 0;
 
         public void setGuestType(GuestType type) {
             _type = type;
@@ -163,6 +164,10 @@ public class LibvirtVMDef {
             this._bootmode = bootmode;
         }
 
+        public void setBootDelay(Integer bootDelay) {
+            this._bootDelay = bootDelay;
+        }
+
         @Override
         public String toString() {
             if (_type == GuestType.KVM) {
@@ -213,6 +218,11 @@ public class LibvirtVMDef {
                 }
                 if (_arch == null || !_arch.equals("aarch64")) {
                     guestDef.append("<smbios mode='sysinfo'/>\n");
+                }
+
+                if (_bootDelay != null && _bootDelay > 0) {
+                    s_logger.info("Delaying VM start " + this._uuid);
+                    guestDef.append("<bootmenu enable='yes' timeout='" + _bootDelay * 1000 + "'/>");
                 }
                 guestDef.append("</os>\n");
                 return guestDef.toString();

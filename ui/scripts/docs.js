@@ -1417,5 +1417,11 @@ cloudStack.docs = {
     },
     helpUpdateTemplateAccountList: {
         desc: 'A comma seperated list of accounts to share the template with. Must be specified with the Add/Remove operation, leave Project ID blank if this is specified.'
+    },
+
+    // Start VM
+    helpBootDelay: {
+        desc: 'Number of seconds to wait for input on how to boot VM',
+        externalLink: ''
     }
 };

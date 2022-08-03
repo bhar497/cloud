@@ -85,6 +85,9 @@ public class StartVMCmd extends BaseAsyncCmd implements UserCmd {
     @Parameter(name = ApiConstants.DEPLOYMENT_PLANNER, type = CommandType.STRING, description = "Deployment planner to use for vm allocation. Available to ROOT admin only", since = "4.4", authorized = { RoleType.Admin })
     private String deploymentPlanner;
 
+    @Parameter(name = ApiConstants.BOOT_DELAY, type = CommandType.INTEGER, description = "Seconds to delay the boot at the boot menu", since = "4.11.3")
+    private Integer bootDelay;
+
     // ///////////////////////////////////////////////////
     // ///////////////// Accessors ///////////////////////
     // ///////////////////////////////////////////////////
@@ -120,6 +123,10 @@ public class StartVMCmd extends BaseAsyncCmd implements UserCmd {
 
     public String getDeploymentPlanner() {
         return deploymentPlanner;
+    }
+
+    public Integer getBootDelay() {
+        return bootDelay;
     }
 
     @Override
