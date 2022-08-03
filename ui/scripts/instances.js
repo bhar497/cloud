@@ -638,7 +638,9 @@
                                             description: this.name
                                         });
                                     })
-
+                                    items.sort(function(a, b) {
+                                        return a.description.localeCompare(b.description);
+                                    });
                                     args.response.success({
                                         data: items
                                     });
@@ -2959,7 +2961,9 @@
                                                         description: this.name
                                                     });
                                                 })
-
+                                                items.sort(function(a, b) {
+                                                    return a.description.localeCompare(b.description);
+                                                });
                                                 args.response.success({
                                                     data: items
                                                 });
