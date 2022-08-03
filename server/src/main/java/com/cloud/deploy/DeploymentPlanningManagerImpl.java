@@ -171,6 +171,7 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
     protected VMReservationDao _reservationDao;
     @Inject
     HostDetailsDao _hostDetailsDao;
+    @Inject
     protected ClusterDrainingManager _clusterDrainingManager;
 
     private static final long INITIAL_RESERVATION_RELEASE_CHECKER_DELAY = 30L * 1000L; // thirty seconds expressed in milliseconds

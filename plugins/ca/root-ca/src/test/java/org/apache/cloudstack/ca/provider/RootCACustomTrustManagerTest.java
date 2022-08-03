@@ -63,7 +63,7 @@ public class RootCACustomTrustManagerTest {
 
     @Test
     public void testAuthNotStrictWithInvalidCert() throws Exception {
-        Mockito.when(crlDao.findBySerial(Mockito.any(BigInteger.class))).thenReturn(new CrlVO());
+//        Mockito.when(crlDao.findBySerial(Mockito.any(BigInteger.class))).thenReturn(new CrlVO());
         final RootCACustomTrustManager trustManager = new RootCACustomTrustManager(clientIp, false, true, certMap, caCertificate, crlDao);
         trustManager.checkClientTrusted(null, null);
     }
