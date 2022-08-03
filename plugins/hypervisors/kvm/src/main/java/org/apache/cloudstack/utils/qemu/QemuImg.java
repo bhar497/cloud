@@ -22,6 +22,8 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.NotImplementedException;
+import com.cloud.hypervisor.kvm.resource.LibvirtConnection;
+import org.libvirt.LibvirtException;
 
 import com.cloud.storage.Storage;
 import com.cloud.utils.script.OutputInterpreter;
@@ -240,6 +242,9 @@ public class QemuImg {
         }
 
         script.add("convert");
+
+        includeForceShared(script);
+
         // autodetect source format. Sometime int he future we may teach KVMPhysicalDisk about more formats, then we can explicitly pass them if necessary
         //s.add("-f");
         //s.add(srcFile.getFormat().toString());
@@ -344,6 +349,9 @@ public class QemuImg {
     public Map<String, String> info(final QemuImgFile file) throws QemuImgException {
         final Script s = new Script(_qemuImgPath);
         s.add("info");
+
+        includeForceShared(s);
+
         s.add(file.getFileName());
         final OutputInterpreter.AllLinesParser parser = new OutputInterpreter.AllLinesParser();
         final String result = s.execute(parser);
@@ -369,6 +377,16 @@ public class QemuImg {
             }
         }
         return info;
+    }
+
+    private void includeForceShared(Script s) {
+        try {
+            long version = LibvirtConnection.getConnection().getVersion();
+            if (version >= 2010000) {
+                s.add("-U");
+            }
+        } catch (LibvirtException ignored) {
+        }
     }
 
     /* List, apply, create or delete snapshots in image */
