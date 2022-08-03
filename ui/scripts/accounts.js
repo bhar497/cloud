@@ -2239,10 +2239,7 @@
                 allowedActions.push("remove");
             }
         } else { //domain-admin, regular-user
-            if (jsonObj.username == g_username) { //selected user is self
-                allowedActions.push("changePassword");
-                allowedActions.push("generateKeys");
-            } else if (isDomainAdmin()) { //if selected user is not self, and the current login is domain-admin
+            if (isDomainAdmin()) {
                 allowedActions.push("edit");
                 if (jsonObj.state == "enabled")
                     allowedActions.push("disable");
@@ -2255,7 +2252,11 @@
                 if (g_idpList) {
                     allowedActions.push("configureSamlAuthorization");
                 }
-            }
+            } else if (jsonObj.username == g_username) {
+                allowedActions.push("edit");
+                allowedActions.push("changePassword");
+                allowedActions.push("generateKeys");
+            } 
         }
         return allowedActions;
     }

@@ -450,7 +450,7 @@
                     }
                 }
 
-                var url = 'samlSso';
+                var url = 'samlSso&redirectonerror=true';
                 if (args.data.idpid) {
                     url = url + '&idpid=' + args.data.idpid;
                 }
