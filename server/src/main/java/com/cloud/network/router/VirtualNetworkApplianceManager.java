@@ -110,6 +110,8 @@ public interface VirtualNetworkApplianceManager extends Manager, VirtualNetworkA
     static final ConfigKey<Double> RouterHealthChecksMaxMemoryUsageThreshold = new ConfigKey<Double>(Double.class, "router.health.checks.max.memory.usage.threshold",
             "Advanced", "100", "Max Memory Usage threshold as % above which check is considered a failure.",
             true, ConfigKey.Scope.Zone, null);
+    static final ConfigKey<String> NetworkStatsExclusionList = new ConfigKey<String>("Advanced", String.class, "network.stats.exclusion.list", "",
+            "CIDRs and IPs that are excluded from network usage stats", true, ConfigKey.Scope.Global);
 
     public static final int DEFAULT_ROUTER_VM_RAMSIZE = 256;            // 256M
     public static final int DEFAULT_ROUTER_CPU_MHZ = 500;                // 500 MHz

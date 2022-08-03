@@ -31,8 +31,6 @@ import org.springframework.stereotype.Component;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreManager;
 import org.apache.cloudstack.storage.datastore.db.StoragePoolVO;
 
-import com.cloud.capacity.Capacity;
-import com.cloud.capacity.dao.CapacityDao;
 import com.cloud.deploy.DeploymentPlan;
 import com.cloud.deploy.DeploymentPlanner.ExcludeList;
 import com.cloud.hypervisor.Hypervisor.HypervisorType;
