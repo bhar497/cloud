@@ -6499,7 +6499,7 @@
                                     },
                                     remoteidtype: {
                                         label: 'label.remote.id.type',
-                                        docID: 'helpRemoteIdType',
+                                        docID: 'helpVPNRemoteIdType',
                                         select: function(args) {
                                             var items = [];
                                             items.push({
@@ -6529,7 +6529,7 @@
                                     },
                                     remoteid: {
                                         label: 'label.remote.id',
-                                        docID: 'helpRemoteId',
+                                        docID: 'helpVPNRemoteId',
                                         validation: {
                                             required: false,
                                         }
