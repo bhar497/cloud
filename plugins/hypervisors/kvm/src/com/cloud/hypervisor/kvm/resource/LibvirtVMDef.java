@@ -68,6 +68,7 @@ public class LibvirtVMDef {
         private String _uuid;
         private final List<BootOrder> _bootdevs = new ArrayList<BootOrder>();
         private String _machine;
+        private Integer _bootDelay = 0;
 
         public void setGuestType(GuestType type) {
             _type = type;
@@ -104,6 +105,10 @@ public class LibvirtVMDef {
             _uuid = uuid;
         }
 
+        public void setBootDelay(Integer bootDelay) {
+            this._bootDelay = bootDelay;
+        }
+
         @Override
         public String toString() {
             if (_type == GuestType.KVM) {
@@ -132,6 +137,10 @@ public class LibvirtVMDef {
                     }
                 }
                 guestDef.append("<smbios mode='sysinfo'/>\n");
+                if (_bootDelay != null && _bootDelay > 0) {
+                    s_logger.info("Delaying VM start " + this._uuid);
+                    guestDef.append("<bootmenu enable='yes' timeout='" + _bootDelay * 1000 + "'/>");
+                }
                 guestDef.append("</os>\n");
                 return guestDef.toString();
             } else if (_type == GuestType.LXC) {
@@ -948,6 +957,7 @@ public class LibvirtVMDef {
         private boolean _pxeDisable = false;
         private boolean _linkStateUp = true;
         private Integer _slot;
+        private Integer queues = 0;
 
         public void defBridgeNet(String brName, String targetBrName, String macAddr, NicModel model) {
             defBridgeNet(brName, targetBrName, macAddr, model, 0);
@@ -1087,6 +1097,14 @@ public class LibvirtVMDef {
             return _linkStateUp;
         }
 
+        public void setQueues(int queues) {
+            this.queues = queues;
+        }
+
+        public int getQueues() {
+            return this.queues;
+        }
+
         @Override
         public String toString() {
             StringBuilder netBuilder = new StringBuilder();
@@ -1134,6 +1152,9 @@ public class LibvirtVMDef {
 
             if (_slot  != null) {
                 netBuilder.append(String.format("<address type='pci' domain='0x0000' bus='0x00' slot='0x%02x' function='0x0'/>\n", _slot));
+            }
+            if (_model == NicModel.VIRTIO && queues > 0) {
+                netBuilder.append(String.format("<driver queues='%d'/>\n", queues));
             }
             netBuilder.append("</interface>\n");
             return netBuilder.toString();
