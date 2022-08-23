@@ -163,10 +163,19 @@ public abstract class GenericDaoBase<T, ID extends Serializable> extends Compone
     protected static final SequenceFetcher s_seqFetcher = SequenceFetcher.getInstance();
 
     public static <J> GenericDao<? extends J, ? extends Serializable> getDao(Class<J> entityType) {
+        Class<?> actual = getProxyTargetClass(entityType);
         @SuppressWarnings("unchecked")
-        GenericDao<? extends J, ? extends Serializable> dao = (GenericDao<? extends J, ? extends Serializable>)s_daoMaps.get(entityType);
+        GenericDao<? extends J, ? extends Serializable> dao = (GenericDao<? extends J, ? extends Serializable>)s_daoMaps.get(actual);
         assert dao != null : "Unable to find DAO for " + entityType + ".  Are you sure you waited for the DAO to be initialized before asking for it?";
         return dao;
+    }
+
+    private static Class<?> getProxyTargetClass(Class<?> query) {
+        if (query.getName().toLowerCase().contains("enhancerbycglib")) {
+            return query.getSuperclass();
+        }
+
+        return query;
     }
 
     @Override
