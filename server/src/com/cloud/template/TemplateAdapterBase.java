@@ -179,7 +179,7 @@ public abstract class TemplateAdapterBase extends AdapterBase implements Templat
         }
 
         if (!isRootAdmin && zoneIdList == null && !isRegionStore ) {
-            // domain admin and user should also be able to register template on a region store
+            // Root admin and user should also be able to register template on a region store
             throw new InvalidParameterValueException("Please specify a valid zone Id. Only admins can create templates in all zones.");
         }
 
