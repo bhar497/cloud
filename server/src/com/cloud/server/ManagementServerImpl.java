@@ -528,6 +528,7 @@ import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
 import org.apache.cloudstack.framework.config.impl.ConfigurationVO;
 import org.apache.cloudstack.framework.security.keystore.KeystoreManager;
 import org.apache.cloudstack.managed.context.ManagedContextRunnable;
+import org.apache.cloudstack.query.QueryService;
 import org.apache.cloudstack.resourcedetail.dao.GuestOsDetailsDao;
 import org.apache.cloudstack.storage.datastore.db.ImageStoreDao;
 import org.apache.cloudstack.storage.datastore.db.ImageStoreVO;
@@ -3428,7 +3429,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         KVMSnapshotEnabled = Boolean.parseBoolean(_configDao.getValue("KVM.snapshot.enabled"));
 
         boolean isAdmin = _accountService.isAdmin(caller.getId());
-        final boolean userPublicTemplateEnabled = (TemplateManager.AllowPublicUserTemplates.valueIn(caller.getId()) | isAdmin);
+        final boolean userPublicTemplateEnabled = (TemplateManager.AllowPublicUserTemplates.valueIn(caller.getId()) | (isAdmin && QueryService.RestrictPublicTemplateAccessToDomain.value()));
 
         // add some parameters UI needs to handle API throttling
         final boolean apiLimitEnabled = Boolean.parseBoolean(_configDao.getValue(Config.ApiLimitEnabled.key()));
