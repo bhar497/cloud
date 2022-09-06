@@ -2916,6 +2916,9 @@
                                                     ipaddress: {
                                                         label: 'label.ip.address'
                                                     },
+                                                    macaddress: {
+                                                        label: 'label.mac.address'
+                                                    },
                                                     id: {
                                                         label: 'label.id'
                                                     },
@@ -3459,6 +3462,9 @@
                                                     },
                                                     ipaddress: {
                                                         label: 'label.ip.address'
+                                                    },
+                                                    macaddress: {
+                                                        label: 'label.mac.address'
                                                     },
                                                     id: {
                                                         label: 'label.id'
@@ -7028,6 +7034,9 @@
                                                     },
                                                     ipaddress: {
                                                         label: 'label.ip.address'
+                                                    },
+                                                    macaddress: {
+                                                        label: 'label.mac.address'
                                                     },
                                                     id: {
                                                         label: 'label.id'
@@ -10891,6 +10900,9 @@
                                             },
                                             ipaddress: {
                                                 label: 'label.ip.address'
+                                            },
+                                            macaddress: {
+                                                label: 'label.mac.address'
                                             },
                                             id: {
                                                 label: 'label.id'
