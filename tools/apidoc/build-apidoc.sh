@@ -66,10 +66,10 @@ set -e
      gen_toc_file="`cygpath -w $thisdir`\\gen_toc.py"
      for file in `find . -type f`; do
          echo "Parse file $file";
-         python $gen_toc_file $file;
+         python2 $gen_toc_file $file;
      done
  else
-     python "$thisdir/gen_toc.py" $(find . -type f)
+     python2 "$thisdir/gen_toc.py" $(find . -type f)
  fi
 
  cat generatetoc_include.xsl >> generatetoc.xsl

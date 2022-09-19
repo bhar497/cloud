@@ -63,7 +63,7 @@
             </goals>
             <configuration>
               <workingDirectory>${basedir}/marvin</workingDirectory>
-              <executable>python</executable>
+              <executable>python2</executable>
               <arguments>
                 <argument>codegenerator.py</argument>
                 <argument>-s</argument>
@@ -80,7 +80,7 @@
             </goals>
             <configuration>
               <workingDirectory>${exec.workingdir}</workingDirectory>
-              <executable>python</executable>
+              <executable>python2</executable>
               <arguments>
                 <argument>mvn-setup.py</argument>
                 <argument>${project.version}</argument>
@@ -117,7 +117,7 @@
                 </goals>
                 <configuration>
                   <workingDirectory>${basedir}/marvin</workingDirectory>
-                  <executable>python</executable>
+                  <executable>python2</executable>
                   <arguments>
                     <argument>codegenerator.py</argument>
                     <argument>-e</argument>
@@ -134,7 +134,7 @@
                 </goals>
                 <configuration>
                   <workingDirectory>${exec.workingdir}</workingDirectory>
-                  <executable>python</executable>
+                  <executable>python2</executable>
                   <arguments>
                     <argument>mvn-setup.py</argument>
                     <argument>${project.version}</argument>
@@ -204,7 +204,7 @@
                 </goals>
                 <configuration>
                   <workingDirectory>${basedir}/marvin</workingDirectory>
-                  <executable>python</executable>
+                  <executable>python2</executable>
                   <arguments>
                    <argument>deployAndRun.py</argument>
                    <argument>-c</argument>

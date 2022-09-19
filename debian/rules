@@ -6,16 +6,17 @@ SYSCONFDIR = "/etc"
 DESTDIR = "debian/tmp"
 
 %:
-	dh $@ --with python2,systemd
+	dh $@ --with systemd
 
 override_dh_auto_configure:
 	cp packaging/debian/replace.properties replace.properties.tmp
 	echo VERSION=${VERSION} >> replace.properties.tmp
 
 override_dh_auto_build:
-	mvn clean package -Psystemvm,developer -Dsystemvm \
+	mvn clean package -e -Psystemvm,developer -Dsystemvm \
 	    -Dcs.replace.properties=replace.properties.tmp \
 	    -Dmaven.repo.local=$(HOME)/.m2/repository \
+	    -DskipTests=true \
 	     ${ACS_BUILD_OPTS}
 
 override_dh_auto_clean:
