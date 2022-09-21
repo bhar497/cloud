@@ -2162,7 +2162,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         devices.addDevice(console);
 
         //add the VNC port passwd here, get the passwd from the vmInstance.
-        final String passwd = vmTO.getVncPassword();
+        // New versions of libVirt correctly complain about passwords longer than 8 characters. VNC protocol ignores everything beyond 8 characters.
+        final String passwd = vmTO.getVncPassword().substring(0, 8);
         final GraphicDef grap = new GraphicDef("vnc", (short)0, true, vmTO.getVncAddr(), passwd, null);
         devices.addDevice(grap);
 

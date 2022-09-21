@@ -13,7 +13,7 @@ override_dh_auto_configure:
 	echo VERSION=${VERSION} >> replace.properties.tmp
 
 override_dh_auto_build:
-	mvn clean package -e -Psystemvm,developer -Dsystemvm \
+	mvn clean package -Psystemvm,developer -Dsystemvm \
 	    -Dcs.replace.properties=replace.properties.tmp \
 	    -Dmaven.repo.local=$(HOME)/.m2/repository \
 	    -DskipTests=true \
@@ -47,8 +47,8 @@ override_dh_auto_install:
 	install -m0755 packaging/debian/$(PACKAGE)-agent.init $(DESTDIR)/$(SYSCONFDIR)/init.d/$(PACKAGE)-agent
 	install -d -m0755 debian/$(PACKAGE)-agent/lib/systemd/system
 	# Fix libvirt service name for Debian/Ubuntu
-	sed -i 's/Requires=libvirtd.service/Requires=libvirt-bin.service/g' packaging/systemd/$(PACKAGE)-agent.service
-	sed -i 's/After=libvirtd.service/After=libvirt-bin.service/g' packaging/systemd/$(PACKAGE)-agent.service
+	#sed -i 's/Requires=libvirtd.service/Requires=libvirt-bin.service/g' packaging/systemd/$(PACKAGE)-agent.service
+	#sed -i 's/After=libvirtd.service/After=libvirt-bin.service/g' packaging/systemd/$(PACKAGE)-agent.service
 	install -m0644 packaging/systemd/$(PACKAGE)-agent.service debian/$(PACKAGE)-agent/lib/systemd/system/$(PACKAGE)-agent.service
 	install -m0644 packaging/systemd/$(PACKAGE)-agent.default $(DESTDIR)/$(SYSCONFDIR)/default/$(PACKAGE)-agent
 
@@ -119,8 +119,8 @@ override_dh_auto_install:
 	install -D agent/target/dependencies/jasypt-1.9.2.jar $(DESTDIR)/usr/share/$(PACKAGE)-common/lib
 
 	# cloudstack-python
-	mkdir -p $(DESTDIR)/usr/share/pyshared
-	cp -r python/lib/cloud* $(DESTDIR)/usr/share/pyshared
+	mkdir -p $(DESTDIR)/usr/lib/python2.7/dist-packages
+	cp -r python/lib/cloud* $(DESTDIR)/usr/lib/python2.7/dist-packages
 
 	# cloudstack-usage
 	mkdir $(DESTDIR)/$(SYSCONFDIR)/$(PACKAGE)/usage

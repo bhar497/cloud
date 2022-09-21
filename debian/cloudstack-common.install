@@ -30,4 +30,5 @@
 /usr/share/cloudstack-common/lib/*
 /usr/bin/cloudstack-set-guest-password
 /usr/bin/cloudstack-set-guest-sshkey
-/usr/share/pyshared
+/usr/lib/python2.7/dist-packages
+
