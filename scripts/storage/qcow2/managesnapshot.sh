@@ -217,21 +217,33 @@ backup_snapshot() {
   elif [ -f ${disk} ]; then
 
     # Localizing this to just this branch since it is specific to our setup
-    local forceSharedWrite=""
+    local forceShareFlag=""
     if $qemu_img -h | grep '\[-U]' >& /dev/null
     then
-      forceSharedWrite="-U"
+      forceShareFlag="-U"
     fi
 
     # Does the snapshot exist?
-    $qemu_img snapshot $forceSharedWrite -l $disk|grep -w "$snapshotname" >& /dev/null
+    $qemu_img snapshot $forceShareFlag -l $disk|grep -w "$snapshotname" >& /dev/null
     if [ $? -gt 0 ]
     then
       printf "there is no $snapshotname on disk $disk\n" >&2
       return 1
     fi
 
-    $qemu_img convert $forceSharedWrite -f qcow2 -O qcow2 -s $snapshotname $disk $destPath/$destName >& /dev/null
+#    $qemu_img convert $forceShareFlag -f qcow2 -O qcow2 -s $snapshotname $disk $destPath/$destName >& /dev/null
+    qemuimg_ret=$($qemu_img convert $forceShareFlag -f qcow2 -O qcow2 -l snapshot.name=$snapshotname $disk $destPath/$destName 2>&1 > /dev/null)
+    ret_code=$?
+    if [ $ret_code -gt 0 ] && [[ $qemuimg_ret == *"convert: invalid option -- 'U'"* ]]; then
+      forceShareFlag=""
+      qemuimg_ret=$($qemu_img convert $forceShareFlag -f qcow2 -O qcow2 -l snapshot.name=$snapshotname $disk $destPath/$destName 2>&1 > /dev/null)
+      ret_code=$?
+    fi
+
+    if [ $ret_code -gt 0 ] && [[ $qemuimg_ret == *"convert: invalid option -- 'l'"* ]]; then
+      $qemu_img convert $forceShareFlag -f qcow2 -O qcow2 -s $snapshotname $disk $destPath/$destName >& /dev/null
+      ret_code=$?
+    fi
     if [ $? -gt 0 ]
     then
       printf "Failed to backup $snapshotname for disk $disk to $destPath\n" >&2
