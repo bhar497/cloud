@@ -336,7 +336,7 @@ public class LibvirtComputingResourceTest {
         assertXpath(domainDoc, "/domain/devices/graphics/@type", "vnc");
         assertXpath(domainDoc, "/domain/devices/graphics/@listen", to.getVncAddr());
         assertXpath(domainDoc, "/domain/devices/graphics/@autoport", "yes");
-        assertXpath(domainDoc, "/domain/devices/graphics/@passwd", to.getVncPassword());
+        assertXpath(domainDoc, "/domain/devices/graphics/@passwd", to.getVncPassword().substring(0, 8));
 
         assertXpath(domainDoc, "/domain/devices/console/@type", "pty");
         assertXpath(domainDoc, "/domain/devices/console/target/@port", "0");
