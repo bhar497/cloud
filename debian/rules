@@ -155,3 +155,6 @@ override_dh_strip_nondeterminism:
 
 override_dh_installdocs:
 	dh_installdocs -A tools/whisker/LICENSE tools/whisker/NOTICE INSTALL.md
+
+override_dh_builddeb:
+    dh_builddeb -- -Zxz
