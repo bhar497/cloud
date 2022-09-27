@@ -1980,7 +1980,7 @@
                                                 var dataObj = {
                                                     domainId: args.domainid,
                                                     state: 'Enabled',
-                                                    listAll: true,
+                                                    listAll: false,
                                                 };
                                                 $.ajax({
                                                     url: createURL('listAccounts', {
