@@ -42,6 +42,7 @@ import com.cloud.agent.api.Command;
 import com.cloud.agent.api.UnsupportedAnswer;
 import com.cloud.hypervisor.kvm.resource.LibvirtVMDef.CpuTuneDef;
 import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.Duration;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -336,7 +337,7 @@ public class LibvirtComputingResourceTest {
         assertXpath(domainDoc, "/domain/devices/graphics/@type", "vnc");
         assertXpath(domainDoc, "/domain/devices/graphics/@listen", to.getVncAddr());
         assertXpath(domainDoc, "/domain/devices/graphics/@autoport", "yes");
-        assertXpath(domainDoc, "/domain/devices/graphics/@passwd", to.getVncPassword().substring(0, 8));
+        assertXpath(domainDoc, "/domain/devices/graphics/@passwd", StringUtils.truncate(to.getVncPassword(), 8));
 
         assertXpath(domainDoc, "/domain/devices/console/@type", "pty");
         assertXpath(domainDoc, "/domain/devices/console/target/@port", "0");
