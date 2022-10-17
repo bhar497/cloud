@@ -1,9 +1,11 @@
 package org.apache.cloudstack.ipreservation.api.commands;
 
 import com.cloud.exception.ConcurrentOperationException;
+import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.user.Account;
 import org.apache.cloudstack.api.APICommand;
 import org.apache.cloudstack.api.ApiConstants;
+import org.apache.cloudstack.api.ApiErrorCode;
 import org.apache.cloudstack.api.BaseCmd;
 import org.apache.cloudstack.api.Parameter;
 import org.apache.cloudstack.api.ServerApiException;
@@ -43,7 +45,11 @@ public class AddIpReservationCmd extends BaseCmd {
 
     @Override
     public void execute() throws ServerApiException, ConcurrentOperationException {
-        ipReservationService.createReservation(this);
+        try {
+            ipReservationService.createReservation(this);
+        } catch (InvalidParameterValueException ex) {
+            throw new ServerApiException(ApiErrorCode.PARAM_ERROR, ex.getMessage());
+        }
     }
 
     @Override

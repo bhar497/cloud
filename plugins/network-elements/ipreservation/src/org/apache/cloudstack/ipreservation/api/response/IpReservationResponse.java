@@ -1,5 +1,6 @@
 package org.apache.cloudstack.ipreservation.api.response;
 
+import com.cloud.network.dao.IpReservationDao;
 import com.google.gson.annotations.SerializedName;
 import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.api.BaseResponse;
@@ -29,5 +30,12 @@ public class IpReservationResponse extends BaseResponse {
         this.startIp = startIp;
         this.endIp = endIp;
         this.networkId = networkId;
+    }
+
+    public IpReservationResponse(IpReservationDao.IpReservationWithNetwork reservation) {
+        this.id = reservation.id;
+        this.startIp = reservation.startIp;
+        this.endIp = reservation.endIp;
+        this.networkId = reservation.networkId;
     }
 }

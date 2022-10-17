@@ -8,19 +8,19 @@ import java.util.List;
 public interface IpReservationDao extends GenericDao<IpReservationVO, Long> {
     List<IpReservationVO> getIpReservationsForNetwork(long networkId);
 
-    List<FullIpReservation> getAllIpReservations();
+    List<IpReservationWithNetwork> getAllIpReservations();
 
-    class FullIpReservation {
+    class IpReservationWithNetwork {
         public String id;
-        public String startip;
-        public String endip;
-        public String networkid;
+        public String startIp;
+        public String endIp;
+        public String networkId;
 
-        public FullIpReservation(String id, String startip, String endip, String networkid) {
+        public IpReservationWithNetwork(String id, String startIp, String endIp, String networkId) {
             this.id = id;
-            this.startip = startip;
-            this.endip = endip;
-            this.networkid = networkid;
+            this.startIp = startIp;
+            this.endIp = endIp;
+            this.networkId = networkId;
         }
     }
 }

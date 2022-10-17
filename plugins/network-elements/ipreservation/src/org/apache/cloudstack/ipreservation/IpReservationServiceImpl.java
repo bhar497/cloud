@@ -1,5 +1,6 @@
 package org.apache.cloudstack.ipreservation;
 
+import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.network.IpReservationVO;
 import com.cloud.network.Network;
 import com.cloud.network.NetworkService;
@@ -7,8 +8,6 @@ import com.cloud.network.dao.IpReservationDao;
 import com.cloud.utils.Pair;
 import com.cloud.utils.component.ComponentLifecycleBase;
 import com.cloud.utils.net.NetUtils;
-import org.apache.cloudstack.api.ApiErrorCode;
-import org.apache.cloudstack.api.ServerApiException;
 import org.apache.cloudstack.api.response.ListResponse;
 import org.apache.cloudstack.api.response.SuccessResponse;
 import org.apache.cloudstack.ipreservation.api.commands.AddIpReservationCmd;
@@ -56,23 +55,23 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
         IpReservationVO create = new IpReservationVO(cmd.getStartIp(), cmd.getEndIp(), network.getId());
         IpReservationVO created = ipReservationDao.persist(create);
 
-        IpReservationResponse ipReservationResponse = generateListResponse(created, network);
+        IpReservationResponse ipReservationResponse = generateResponse(created, network.getUuid());
         ipReservationResponse.setResponseName(cmd.getCommandName());
         cmd.setResponseObject(ipReservationResponse);
     }
 
-    private static void validateAddReservation(AddIpReservationCmd cmd, Network network) {
+    protected static void validateAddReservation(AddIpReservationCmd cmd, Network network) {
         if (!NetUtils.validIpRange(cmd.getStartIp(), cmd.getEndIp())) {
-            throw new ServerApiException(ApiErrorCode.PARAM_ERROR, "Start and end are not valid range");
+            throw new InvalidParameterValueException("Start and end are not valid range");
         }
 
         Pair<String, Integer> cidr = NetUtils.getCidr(network.getCidr());
         if (!NetUtils.sameSubnetCIDR(cidr.first(), cmd.getStartIp(), cidr.second())) {
-            throw new ServerApiException(ApiErrorCode.PARAM_ERROR, "Start is not within the network cidr");
+            throw new InvalidParameterValueException("Start is not within the network cidr");
         }
 
         if (!NetUtils.sameSubnetCIDR(cidr.first(), cmd.getEndIp(), cidr.second())) {
-            throw new ServerApiException(ApiErrorCode.PARAM_ERROR, "End is not within the network cidr");
+            throw new InvalidParameterValueException("End is not within the network cidr");
         }
     }
 
@@ -82,13 +81,14 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
             logger.debug("Getting all reservations for network " + cmd.getNetworkId());
             Network network = networkService.getNetwork(cmd.getNetworkId());
             List<IpReservationVO> reservations = ipReservationDao.getIpReservationsForNetwork(network.getId());
-            ListResponse<IpReservationResponse> response = generateListResponse(reservations, network);
+            ListResponse<IpReservationResponse> response = generateListResponse(reservations, network.getUuid());
             response.setResponseName(cmd.getCommandName());
             cmd.setResponseObject(response);
         } else {
-            List<IpReservationDao.FullIpReservation> reservations = ipReservationDao.getAllIpReservations();
+            logger.debug("Getting all reservations");
+            List<IpReservationDao.IpReservationWithNetwork> reservations = ipReservationDao.getAllIpReservations();
             List<IpReservationResponse> responses = reservations.stream()
-                    .map(r -> new IpReservationResponse(r.id, r.startip, r.endip, r.networkid))
+                    .map(IpReservationResponse::new)
                     .collect(Collectors.toList());
             ListResponse<IpReservationResponse> response = new ListResponse<>();
             response.setResponses(responses);
@@ -99,6 +99,7 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
 
     @Override
     public void removeReservation(RemoveIpReservationCmd cmd) {
+        logger.debug("Removing reservation: " + cmd.getId());
         IpReservationVO reservation = ipReservationDao.findByUuid(cmd.getId());
         boolean removed = ipReservationDao.remove(reservation.getId());
         SuccessResponse response = new SuccessResponse(cmd.getCommandName());
@@ -106,13 +107,13 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
         cmd.setResponseObject(response);
     }
 
-    protected IpReservationResponse generateListResponse(IpReservationVO reservation, Network network) {
-        return new IpReservationResponse(reservation.getUuid(), reservation.getStartIp(), reservation.getEndIp(), network.getUuid());
+    protected IpReservationResponse generateResponse(IpReservationVO reservation, String networkUuid) {
+        return new IpReservationResponse(reservation.getUuid(), reservation.getStartIp(), reservation.getEndIp(), networkUuid);
     }
 
-    protected ListResponse<IpReservationResponse> generateListResponse(List<IpReservationVO> reservations, Network network) {
+    protected ListResponse<IpReservationResponse> generateListResponse(List<IpReservationVO> reservations, String networkUuid) {
         List<IpReservationResponse> responses = reservations.stream()
-                .map(reservation -> new IpReservationResponse(reservation.getUuid(), reservation.getStartIp(), reservation.getEndIp(), network.getUuid()))
+                .map(reservation -> generateResponse(reservation, networkUuid))
                 .collect(Collectors.toList());
         ListResponse<IpReservationResponse> response = new ListResponse<>();
         response.setResponses(responses);
