@@ -193,7 +193,8 @@ known_categories = {
     'Sioc' : 'Sioc',
     'addIpReservation' : 'Network',
     'listIpReservation' : 'Network',
-    'removeIpReservation' : 'Network'
+    'removeIpReservation' : 'Network',
+    'generateIpReservation': 'Network'
     }
 
 

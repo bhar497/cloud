@@ -1,8 +1,10 @@
 package org.apache.cloudstack.ipreservation;
 
+import com.cloud.exception.InsufficientVirtualNetworkCapacityException;
 import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.network.IpReservationVO;
 import com.cloud.network.Network;
+import com.cloud.network.NetworkModel;
 import com.cloud.network.NetworkService;
 import com.cloud.network.dao.IpReservationDao;
 import com.cloud.utils.Pair;
@@ -11,6 +13,7 @@ import com.cloud.utils.net.NetUtils;
 import org.apache.cloudstack.api.response.ListResponse;
 import org.apache.cloudstack.api.response.SuccessResponse;
 import org.apache.cloudstack.ipreservation.api.commands.AddIpReservationCmd;
+import org.apache.cloudstack.ipreservation.api.commands.GenerateIpReservationCmd;
 import org.apache.cloudstack.ipreservation.api.commands.ListIpReservationCmd;
 import org.apache.cloudstack.ipreservation.api.commands.RemoveIpReservationCmd;
 import org.apache.cloudstack.ipreservation.api.response.IpReservationResponse;
@@ -32,6 +35,9 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
     @Inject
     NetworkService networkService;
 
+    @Inject
+    NetworkModel networkModel;
+
     @Override
     public boolean configure(String name, Map<String, Object> params) throws ConfigurationException {
         super.configure(name, params);
@@ -42,6 +48,7 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
     public List<Class<?>> getCommands() {
         final List<Class<?>> cmdList = new ArrayList<>();
         cmdList.add(AddIpReservationCmd.class);
+        cmdList.add(GenerateIpReservationCmd.class);
         cmdList.add(ListIpReservationCmd.class);
         cmdList.add(RemoveIpReservationCmd.class);
         return cmdList;
@@ -51,6 +58,9 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
     public void createReservation(AddIpReservationCmd cmd) {
         logger.debug("Creating reservation for network: " + cmd.getNetworkId() + " with range: " + cmd.getStartIp() + "-" + cmd.getEndIp());
         Network network = networkService.getNetwork(cmd.getNetworkId());
+        if (network == null) {
+            throw new InvalidParameterValueException("Unable to find network: " + cmd.getNetworkId());
+        }
         validateAddReservation(cmd, network);
         IpReservationVO create = new IpReservationVO(cmd.getStartIp(), cmd.getEndIp(), network.getId());
         IpReservationVO created = ipReservationDao.persist(create);
@@ -76,10 +86,37 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
     }
 
     @Override
+    public void generateReservation(GenerateIpReservationCmd cmd) throws InsufficientVirtualNetworkCapacityException {
+        logger.debug("Generating an IP Reservation for network: " + cmd.getNetworkId());
+        Network network = networkService.getNetwork(cmd.getNetworkId());
+        if (network == null) {
+            throw new InvalidParameterValueException("Unable to find network: " + cmd.getNetworkId());
+        }
+        Long freeIp = networkModel.getAvailableIps(network, null)
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new InsufficientVirtualNetworkCapacityException("There is no free ip available on this network.",
+                        Network.class,
+                        network.getId()));
+
+        String ip = NetUtils.long2Ip(freeIp);
+
+        IpReservationVO create = new IpReservationVO(ip, ip, network.getId());
+        IpReservationVO created = ipReservationDao.persist(create);
+
+        IpReservationResponse response = generateResponse(created, network.getUuid());
+        response.setResponseName(cmd.getCommandName());
+        cmd.setResponseObject(response);
+    }
+
+    @Override
     public void getReservations(ListIpReservationCmd cmd) {
         if (cmd.getNetworkId() != null) {
             logger.debug("Getting all reservations for network " + cmd.getNetworkId());
             Network network = networkService.getNetwork(cmd.getNetworkId());
+            if (network == null) {
+                throw new InvalidParameterValueException("Unable to find network: " + cmd.getNetworkId());
+            }
             List<IpReservationVO> reservations = ipReservationDao.getIpReservationsForNetwork(network.getId());
             ListResponse<IpReservationResponse> response = generateListResponse(reservations, network.getUuid());
             response.setResponseName(cmd.getCommandName());
@@ -101,7 +138,10 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
     public void removeReservation(RemoveIpReservationCmd cmd) {
         logger.debug("Removing reservation: " + cmd.getId());
         IpReservationVO reservation = ipReservationDao.findByUuid(cmd.getId());
-        boolean removed = ipReservationDao.remove(reservation.getId());
+        boolean removed = true;
+        if (reservation != null) {
+            removed = ipReservationDao.remove(reservation.getId());
+        }
         SuccessResponse response = new SuccessResponse(cmd.getCommandName());
         response.setSuccess(removed);
         cmd.setResponseObject(response);
