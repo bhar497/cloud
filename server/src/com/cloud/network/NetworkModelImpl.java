@@ -1876,7 +1876,7 @@ public class NetworkModelImpl extends ManagerBase implements NetworkModel, Confi
         //Get ips used by load balancers
         List<String> lbIps = _appLbRuleDao.listLbIpsBySourceIpNetworkId(network.getId());
         ips.addAll(lbIps);
-        // Get ips used by Ontap SVMs
+        // Get all reserved IPs
         List<IpReservationVO> reservations = ipReservationDao.getIpReservationsForNetwork(network.getId());
         for (IpReservation reservation : reservations) {
             ips.addAll(reservation.getIpList());

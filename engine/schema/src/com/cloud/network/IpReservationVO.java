@@ -125,7 +125,7 @@ public class IpReservationVO implements IpReservation {
     }
 
     public String toString() {
-        return "OntapSvm[" + id +
+        return "IpReservation[" + id +
                 "-" +
                 startIp +
                 "-" +
