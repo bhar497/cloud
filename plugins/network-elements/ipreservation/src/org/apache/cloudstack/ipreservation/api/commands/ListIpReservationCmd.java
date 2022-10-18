@@ -15,7 +15,7 @@ import org.apache.cloudstack.ipreservation.api.response.IpReservationResponse;
 
 import javax.inject.Inject;
 
-@APICommand(name = "listIpReservation", description = "List IP Reservations", responseObject = IpReservationResponse.class, requestHasSensitiveInfo = false, responseHasSensitiveInfo = false,
+@APICommand(name = "listIpReservations", description = "List IP Reservations", responseObject = IpReservationResponse.class, requestHasSensitiveInfo = false, responseHasSensitiveInfo = false,
         since = "4.11.3.0")
 public class ListIpReservationCmd extends BaseListCmd {
 
@@ -40,7 +40,7 @@ public class ListIpReservationCmd extends BaseListCmd {
 
     @Override
     public String getCommandName() {
-        return "listipreservationresponse";
+        return "listipreservationsresponse";
     }
 
     @Override

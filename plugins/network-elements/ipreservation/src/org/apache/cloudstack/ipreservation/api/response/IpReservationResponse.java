@@ -26,6 +26,7 @@ public class IpReservationResponse extends BaseResponse {
     }
 
     public IpReservationResponse(String id, String startIp, String endIp, String networkId) {
+        super("ipreservation");
         this.id = id;
         this.startIp = startIp;
         this.endIp = endIp;
@@ -33,6 +34,7 @@ public class IpReservationResponse extends BaseResponse {
     }
 
     public IpReservationResponse(IpReservationDao.IpReservationWithNetwork reservation) {
+        super("ipreservation");
         this.id = reservation.id;
         this.startIp = reservation.startIp;
         this.endIp = reservation.endIp;
