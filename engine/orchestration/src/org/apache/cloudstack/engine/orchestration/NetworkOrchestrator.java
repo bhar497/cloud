@@ -20,8 +20,7 @@ package org.apache.cloudstack.engine.orchestration;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -705,6 +704,21 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
 
                         if (domainId != null && aclType == ACLType.Domain) {
                             _networksDao.addDomainToNetwork(id, domainId, subdomainAccess == null ? true : subdomainAccess);
+                        }
+
+                        if (vo.getBroadcastDomainType() == BroadcastDomainType.Vlan && vo.getBroadcastUri() != null && offering.getSpecifyVlan()) {
+                            s_logger.info("Recording a manually assigned vlan to table");
+                            String vnet = BroadcastDomainType.getValue(vo.getBroadcastUri());
+                            List<DataCenterVnetVO> vnetVOs = _datacenterVnetDao.findVnet(plan.getDataCenterId(), plan.getPhysicalNetworkId(), vnet);
+                            if (vnetVOs.size() == 1) {
+                                DataCenterVnetVO vnetVO = vnetVOs.get(0);
+                                if (vnetVO.getTakenAt() == null) {
+                                    vnetVO.setTakenAt(new Date());
+                                    vnetVO.setAccountId(owner.getId());
+                                    vnetVO.setReservationId(vo.getUuid());
+                                    _datacenterVnetDao.update(vnetVO.getId(), vnetVO);
+                                }
+                            }
                         }
                     }
                 });
@@ -1543,18 +1557,13 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
         // we have to implement default nics first - to ensure that default network elements start up first in multiple
         //nics case
         // (need for setting DNS on Dhcp to domR's Ip4 address)
-        Collections.sort(nics, new Comparator<NicVO>() {
+        List<NicVO> sortedNics = new ArrayList<>();
+        nics.stream().filter(NicVO::isDefaultNic).findFirst().ifPresent(sortedNics::add);
+        // Guard against potentially missing default nic
+        long defaultId = sortedNics.size() > 0 ? sortedNics.get(0).getId() : -1;
+        nics.stream().filter(n -> n.getId() != defaultId).forEach(sortedNics::add);
 
-            @Override
-            public int compare(final NicVO nic1, final NicVO nic2) {
-                final boolean isDefault1 = nic1.isDefaultNic();
-                final boolean isDefault2 = nic2.isDefaultNic();
-
-                return isDefault1 ^ isDefault2 ? isDefault1 ^ true ? 1 : -1 : 0;
-            }
-        });
-
-        for (final NicVO nic : nics) {
+        for (final NicVO nic : sortedNics) {
             final Pair<NetworkGuru, NetworkVO> implemented = implementNetwork(nic.getNetworkId(), dest, context, vmProfile.getVirtualMachine().getType() == Type.DomainRouter);
             if (implemented == null || implemented.first() == null) {
                 s_logger.warn("Failed to implement network id=" + nic.getNetworkId() + " as a part of preparing nic id=" + nic.getId());
@@ -2193,14 +2202,14 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
 
         if (vlanSpecified) {
             URI uri = BroadcastDomainType.fromString(vlanId);
-            //don't allow to specify vlan tag used by physical network for dynamic vlan allocation
-            if (!hasGuestBypassVlanOverlapCheck(bypassVlanOverlapCheck, ntwkOff) && _dcDao.findVnet(zoneId, pNtwk.getId(), BroadcastDomainType.getValue(uri)).size() > 0) {
+            // Allow bypass of VLAN ID check for dynamic VLAN allocation ranges
+            if (!bypassVlanOverlapCheck && _dcDao.findVnet(zoneId, pNtwk.getId(), BroadcastDomainType.getValue(uri)).size() > 0) {
                 throw new InvalidParameterValueException("The VLAN tag " + vlanId + " is already being used for dynamic vlan allocation for the guest network in zone "
                         + zone.getName());
             }
             if (! UuidUtils.validateUUID(vlanId)){
-                // For Isolated and L2 networks, don't allow to create network with vlan that already exists in the zone
-                if (ntwkOff.getGuestType() == GuestType.Isolated || !hasGuestBypassVlanOverlapCheck(bypassVlanOverlapCheck, ntwkOff)) {
+                // Allow bypass of VLAN ID check for Isolated and L2 networks
+                if (!bypassVlanOverlapCheck) {
                     if (_networksDao.listByZoneAndUriAndGuestType(zoneId, uri.toString(), null).size() > 0) {
                         throw new InvalidParameterValueException("Network with vlan " + vlanId + " already exists or overlaps with other network vlans in zone " + zoneId);
                     } else {
@@ -2388,16 +2397,7 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
         return network;
     }
 
-  /**
-   * Checks bypass VLAN id/range overlap check during network creation for guest networks
-   * @param bypassVlanOverlapCheck bypass VLAN id/range overlap check
-   * @param ntwkOff network offering
-   */
-  private boolean hasGuestBypassVlanOverlapCheck(final boolean bypassVlanOverlapCheck, final NetworkOfferingVO ntwkOff) {
-    return bypassVlanOverlapCheck && ntwkOff.getGuestType() != GuestType.Isolated;
-  }
-
-  /**
+    /**
      * Checks for L2 network offering services. Only 2 cases allowed:
      * - No services
      * - User Data service only, provided by ConfigDrive
@@ -2664,7 +2664,9 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
                     public void doInTransactionWithoutResult(final TransactionStatus status) {
                         final NetworkGuru guru = AdapterBase.getAdapterByName(networkGurus, networkFinal.getGuruName());
 
-                        if (!guru.trash(networkFinal, _networkOfferingDao.findById(networkFinal.getNetworkOfferingId()))) {
+                        NetworkOfferingVO networkOffering = _networkOfferingDao.findById(networkFinal.getNetworkOfferingId());
+
+                        if (!guru.trash(networkFinal, networkOffering)) {
                             throw new CloudRuntimeException("Failed to trash network.");
                         }
 
@@ -2695,6 +2697,10 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
                             if (updateResourceCount) {
                                 _resourceLimitMgr.decrementResourceCount(networkFinal.getAccountId(), ResourceType.network, networkFinal.getDisplayNetwork());
                             }
+                        }
+                        if (networkFinal.getBroadcastDomainType() == BroadcastDomainType.Vlan && networkFinal.getBroadcastUri() != null && networkOffering.getSpecifyVlan()) {
+                            s_logger.info("Cleaning up our manually assigned vlan from table");
+                            _dcDao.releaseVnet(BroadcastDomainType.getValue(networkFinal.getBroadcastUri()), networkFinal.getDataCenterId(), networkFinal.getPhysicalNetworkId(), networkFinal.getAccountId(), networkFinal.getUuid());
                         }
                     }
                 });
