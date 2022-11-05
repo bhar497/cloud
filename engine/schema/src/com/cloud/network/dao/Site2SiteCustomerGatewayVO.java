@@ -85,12 +85,6 @@ public class Site2SiteCustomerGatewayVO implements Site2SiteCustomerGateway {
     @Column(name = "ike_version")
     private String ikeVersion;
 
-    @Column(name = "remote_id")
-    private String remoteId;
-
-    @Column(name = "remote_id_type")
-    private String remoteIdType;
-
     @Column(name = GenericDao.REMOVED_COLUMN)
     private Date removed;
 
@@ -98,7 +92,7 @@ public class Site2SiteCustomerGatewayVO implements Site2SiteCustomerGateway {
     }
 
     public Site2SiteCustomerGatewayVO(String name, long accountId, long domainId, String gatewayIp, String guestCidrList, String ipsecPsk, String ikePolicy,
-            String espPolicy, long ikeLifetime, long espLifetime, boolean dpd, boolean encap, boolean splitConnections, String ikeVersion, String remoteId, String remoteIdType) {
+            String espPolicy, long ikeLifetime, long espLifetime, boolean dpd, boolean encap, boolean splitConnections, String ikeVersion) {
         this.name = name;
         this.gatewayIp = gatewayIp;
         this.guestCidrList = guestCidrList;
@@ -114,8 +108,6 @@ public class Site2SiteCustomerGatewayVO implements Site2SiteCustomerGateway {
         this.domainId = domainId;
         this.splitConnections = splitConnections;
         this.ikeVersion = ikeVersion;
-        this.remoteId = remoteId;
-        this.remoteIdType = remoteIdType;
     }
 
     @Override
@@ -253,24 +245,6 @@ public class Site2SiteCustomerGatewayVO implements Site2SiteCustomerGateway {
 
     public void setIkeVersion(String ikeVersion) {
         this.ikeVersion = ikeVersion;
-    }
-
-    @Override
-    public String getRemoteId() {
-        return remoteId;
-    }
-
-    public void setRemoteId(String remoteId) {
-        this.remoteId = remoteId;
-    }
-
-    @Override
-    public String getRemoteIdType() {
-        return remoteIdType;
-    }
-
-    public void setRemoteIdType(String remoteIdType) {
-        this.remoteIdType = remoteIdType;
     }
 
     @Override

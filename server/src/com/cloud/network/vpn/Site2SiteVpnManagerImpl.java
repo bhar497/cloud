@@ -240,20 +240,10 @@ public class Site2SiteVpnManagerImpl extends ManagerBase implements Site2SiteVpn
             ikeVersion = "ike";
         }
 
-        String remoteId = cmd.getRemoteId();
-        if (remoteId == null) {
-            remoteId = "";
-        }
-
-        String remoteIdType = cmd.getRemoteIdType();
-        if (remoteIdType == null) {
-            remoteIdType = "auto";
-        }
-
         checkCustomerGatewayCidrList(peerCidrList);
 
         Site2SiteCustomerGatewayVO gw =
-            new Site2SiteCustomerGatewayVO(name, accountId, owner.getDomainId(), gatewayIp, peerCidrList, ipsecPsk, ikePolicy, espPolicy, ikeLifetime, espLifetime, dpd, encap, splitConnections, ikeVersion, remoteId, remoteIdType);
+            new Site2SiteCustomerGatewayVO(name, accountId, owner.getDomainId(), gatewayIp, peerCidrList, ipsecPsk, ikePolicy, espPolicy, ikeLifetime, espLifetime, dpd, encap, splitConnections, ikeVersion);
         _customerGatewayDao.persist(gw);
         return gw;
     }
@@ -499,16 +489,6 @@ public class Site2SiteVpnManagerImpl extends ManagerBase implements Site2SiteVpn
             ikeVersion = "ike";
         }
 
-        String remoteId = cmd.getRemoteId();
-        if (remoteId == null) {
-            remoteId = "";
-        }
-
-        String remoteIdType = cmd.getRemoteIdType();
-        if (remoteIdType == null) {
-            remoteIdType = "auto";
-        }
-
         checkCustomerGatewayCidrList(guestCidrList);
 
         long accountId = gw.getAccountId();
@@ -529,8 +509,6 @@ public class Site2SiteVpnManagerImpl extends ManagerBase implements Site2SiteVpn
         gw.setEncap(encap);
         gw.setSplitConnections(splitConnections);
         gw.setIkeVersion(ikeVersion);
-        gw.setRemoteId(remoteId);
-        gw.setRemoteIdType(remoteIdType);
         _customerGatewayDao.persist(gw);
 
         List<Site2SiteVpnConnectionVO> conns = _vpnConnectionDao.listByCustomerGatewayId(id);
