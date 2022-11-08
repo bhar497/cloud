@@ -2720,13 +2720,15 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
 
                                 if (networkToAssign.isPresent()) {
                                     NetworkVO network = networkToAssign.get();
+                                    NetworkOffering offering = _networkOfferingDao.findById(network.getNetworkOfferingId());
                                     s_logger.info("Re-assigning vlan " + vlan + " to network: " + network);
                                     DataCenterVnetVO vnetVO = vnetVOs.get(0);
                                     vnetVO.setTakenAt(network.getCreated());
                                     vnetVO.setAccountId(network.getAccountId());
                                     if (network.getReservationId() != null) {
                                         vnetVO.setReservationId(network.getReservationId());
-                                    } else {
+                                    } else if (offering.getSpecifyVlan()) {
+                                        // Only do this if it is one of our manually assigned networks
                                         vnetVO.setReservationId(network.getUuid());
                                     }
                                     _datacenterVnetDao.update(vnetVO.getId(), vnetVO);
