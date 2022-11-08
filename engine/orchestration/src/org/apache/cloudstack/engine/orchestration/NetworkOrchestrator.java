@@ -2730,6 +2730,8 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
                                     } else if (offering.getSpecifyVlan()) {
                                         // Only do this if it is one of our manually assigned networks
                                         vnetVO.setReservationId(network.getUuid());
+                                    } else {
+                                        vnetVO.setReservationId(null);
                                     }
                                     _datacenterVnetDao.update(vnetVO.getId(), vnetVO);
                                 } else {
