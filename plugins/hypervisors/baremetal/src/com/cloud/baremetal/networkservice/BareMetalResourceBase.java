@@ -195,7 +195,7 @@ public class BareMetalResourceBase extends ManagerBase implements ServerResource
         if (scriptPath == null) {
             throw new ConfigurationException("Cannot find ping script " + scriptPath);
         }
-        String pythonPath = "/usr/bin/python";
+        String pythonPath = "/usr/bin/python2";
         _pingCommand = new Script2(pythonPath, s_logger);
         _pingCommand.add(scriptPath);
         _pingCommand.add("ping");
