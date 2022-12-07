@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,32 +16,90 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import cloud_utils
-from cloud_utils import Command
-from cloudutils.configFileOps import configFileOps
+# import cloud_utils
+# from cloud_utils import Command
+# from cloudutils.configFileOps import configFileOps
 import logging
 import sys
 import os
 import xml.dom.minidom
-from optparse import OptionParser, OptionGroup, OptParseError, BadOptionError, OptionError, OptionConflictError, OptionValueError
+from optparse import OptionParser
 import re
 import libvirt
 import fcntl
 import time
 from netaddr import IPAddress, IPNetwork
 from netaddr.core import AddrFormatError
+from subprocess import CalledProcessError, check_call
+import subprocess
 
+
+class Command:
+    """This class simulates a shell command"""
+    def __init__(self,name,parent=None):
+        self.__name = name
+        self.__parent = parent
+    def __getattr__(self,name):
+        if name == "_print": name = "print"
+        return Command(name,self)
+    def __call__(self,*args,**kwargs):
+        cmd = self.__get_recursive_name() + list(args)
+        #print "	",cmd
+        kwargs = dict(kwargs)
+        if "stdout" not in kwargs: kwargs["stdout"] = subprocess.PIPE
+        if "stderr" not in kwargs: kwargs["stderr"] = subprocess.PIPE
+        popen = subprocess.Popen(cmd,**kwargs)
+        m = popen.communicate()
+        ret = popen.wait()
+        if ret:
+            e = CalledProcessError(ret,cmd)
+            e.stdout,e.stderr = m
+            raise e
+        class CommandOutput:
+            def __init__(self,stdout,stderr):
+                self.stdout = stdout
+                self.stderr = stderr
+        return CommandOutput(*m)
+    def __lt__(self,other):
+        cmd = self.__get_recursive_name()
+        #print "	",cmd,"<",other
+        popen = subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        m = popen.communicate(other)
+        ret = popen.wait()
+        if ret:
+            e = CalledProcessError(ret,cmd)
+            e.stdout,e.stderr = m
+            raise e
+        class CommandOutput:
+            def __init__(self,stdout,stderr):
+                self.stdout = stdout
+                self.stderr = stderr
+        return CommandOutput(*m)
+
+    def __get_recursive_name(self,sep=None):
+        m = self
+        l = []
+        while m is not None:
+            l.append(m.__name)
+            m = m.__parent
+        l.reverse()
+        if sep: return sep.join(l)
+        else: return l
+    def __str__(self):
+        return '<Command %r>'%self.__get_recursive_name(sep=" ")
+
+    def __repr__(self): return self.__str__()
 
 logpath = "/var/run/cloud/"        # FIXME: Logs should reside in /var/log/cloud
 lock_file = "/var/lock/cloudstack_security_group.lock"
-iptables = Command("iptables")
+# iptables = Command("iptables")
 bash = Command("/bin/bash")
-ebtables = Command("ebtables")
+# ebtables = Command("ebtables")
 driver = "qemu:///system"
-cfo = configFileOps("/etc/cloudstack/agent/agent.properties")
-hyper = cfo.getEntry("hypervisor.type")
-if hyper == "lxc":
-    driver = "lxc:///"
+# cfo = configFileOps("/etc/cloudstack/agent/agent.properties")
+# hyper = cfo.getEntry("hypervisor.type")
+# if hyper == "lxc":
+#     driver = "lxc:///"
 
 lock_handle = None
 
@@ -59,19 +117,19 @@ def obtain_file_lock(path):
 
 def execute(cmd):
     logging.debug(cmd)
-    return bash("-c", cmd).stdout
+    return bash("-c", cmd).stdout.decode('utf8')
 
 def can_bridge_firewall(privnic):
     try:
         execute("which iptables")
     except:
-        print "no iptables on your host machine"
+        print("no iptables on your host machine")
         sys.exit(1)
 
     try:
         execute("which ebtables")
     except:
-        print "no ebtables on your host machine"
+        print("no ebtables on your host machine")
         sys.exit(2)
 
 
@@ -123,11 +181,11 @@ def virshlist(states):
 
     conn = libvirt.openReadOnly(driver)
     if conn == None:
-       print 'Failed to open connection to the hypervisor'
+       print('Failed to open connection to the hypervisor')
        sys.exit(3)
 
-    alldomains = map(conn.lookupByID, conn.listDomainsID())
-    alldomains += map(conn.lookupByName, conn.listDefinedDomains())
+    alldomains = list(map(conn.lookupByID, conn.listDomainsID()))
+    alldomains += list(map(conn.lookupByName, conn.listDefinedDomains()))
 
     domains = []
     for domain in alldomains:
@@ -151,7 +209,7 @@ def virshdomstate(domain):
 
     conn = libvirt.openReadOnly(driver)
     if conn == None:
-       print 'Failed to open connection to the hypervisor'
+       print('Failed to open connection to the hypervisor')
        sys.exit(3)
 
     try:
@@ -168,7 +226,7 @@ def virshdumpxml(domain):
 
     conn = libvirt.openReadOnly(driver)
     if conn == None:
-       print 'Failed to open connection to the hypervisor'
+       print('Failed to open connection to the hypervisor')
        sys.exit(3)
 
     try:
@@ -748,7 +806,7 @@ def network_rules_for_rebooted_vm(vmName):
     delete_rules_for_vm_in_bridge_firewall_chain(vm_name)
 
     brName = execute("iptables-save | awk -F '-j ' '/FORWARD -o(.*)physdev-is-bridged(.*)BF/ {print $2}'").strip()
-    if brName is None or brName is "":
+    if brName is None or brName == "":
         brName = "cloudbr0"
     else:
         brName = execute("iptables-save |grep physdev-is-bridged |grep FORWARD |grep BF |grep '\-o' |awk '{print $4}' | head -1").strip()
@@ -808,7 +866,7 @@ def get_rule_logs_for_vms():
     except:
         logging.exception("Failed to get rule logs, better luck next time!")
 
-    print ";".join(result)
+    print(";".join(result))
 
 def cleanup_rules_for_dead_vms():
     return True
@@ -1156,7 +1214,7 @@ def getvmId(vmName):
 
     conn = libvirt.openReadOnly(driver)
     if conn == None:
-       print 'Failed to open connection to the hypervisor'
+       print('Failed to open connection to the hypervisor')
        sys.exit(3)
 
     try:
