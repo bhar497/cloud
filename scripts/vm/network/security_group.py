@@ -16,9 +16,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# import cloud_utils
-# from cloud_utils import Command
-# from cloudutils.configFileOps import configFileOps
 import logging
 import sys
 import os
@@ -30,7 +27,7 @@ import fcntl
 import time
 from netaddr import IPAddress, IPNetwork
 from netaddr.core import AddrFormatError
-from subprocess import CalledProcessError, check_call
+from subprocess import CalledProcessError
 import subprocess
 
 
@@ -92,10 +89,9 @@ class Command:
 
 logpath = "/var/run/cloud/"        # FIXME: Logs should reside in /var/log/cloud
 lock_file = "/var/lock/cloudstack_security_group.lock"
-# iptables = Command("iptables")
 bash = Command("/bin/bash")
-# ebtables = Command("ebtables")
 driver = "qemu:///system"
+# Removing this since we aren't using LXC
 # cfo = configFileOps("/etc/cloudstack/agent/agent.properties")
 # hyper = cfo.getEntry("hypervisor.type")
 # if hyper == "lxc":
