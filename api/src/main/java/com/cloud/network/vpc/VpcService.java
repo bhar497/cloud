@@ -153,6 +153,7 @@ public interface VpcService {
      * @param vpcId TODO
      * @param physicalNetworkId
      * @param vlan
+     * @param bypassVlanOverlapCheck
      * @param ipAddress
      * @param gateway
      * @param netmask

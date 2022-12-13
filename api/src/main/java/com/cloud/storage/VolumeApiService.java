@@ -21,6 +21,7 @@ package com.cloud.storage;
 import java.net.MalformedURLException;
 import java.util.Map;
 
+import org.apache.cloudstack.api.command.user.volume.AssignVolumeCmd;
 import org.apache.cloudstack.api.command.user.volume.AttachVolumeCmd;
 import org.apache.cloudstack.api.command.user.volume.CreateVolumeCmd;
 import org.apache.cloudstack.api.command.user.volume.DetachVolumeCmd;
@@ -64,6 +65,14 @@ public interface VolumeApiService {
      * @return the volume object
      */
     Volume createVolume(CreateVolumeCmd cmd);
+
+    /**
+     * Re-assigns a volume from one account to another
+     * @param cmd
+     *              the API command wrapping the criteria
+     * @return the volume object
+     */
+    Volume assignVolume(AssignVolumeCmd cmd) throws ResourceAllocationException;
 
     /**
      * Resizes the volume based on the given criteria

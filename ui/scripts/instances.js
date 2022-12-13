@@ -3818,6 +3818,10 @@
                                 async: true,
                                 success: function(json) {
                                     // Handling the display of network name for a VM under the NICS tabs
+                                    let nics = json.listvirtualmachinesresponse.virtualmachine[0].nic;
+                                    let defaultNics = nics.filter(n => n.isdefault);
+                                    let regularNics = nics.filter(n => !n.isdefault);
+                                    let sortedNics = defaultNics.concat(regularNics);
                                     args.response.success({
                                         actionFilter: function(args) {
                                             if (args.context.item.isdefault) {
@@ -3826,7 +3830,7 @@
                                                 return ['remove', 'makeDefault', 'updateIpaddr'];
                                             }
                                         },
-                                        data: $.map(json.listvirtualmachinesresponse.virtualmachine[0].nic, function(nic, index) {
+                                        data: $.map(sortedNics, function(nic, index) {
                                             if (nic.secondaryip != null) {
                                                 var secondaryips = "";
                                                 for (var i = 0; i < nic.secondaryip.length; i++) {
@@ -3940,7 +3944,7 @@
                                     var jsonObj = json.listvirtualmachinesresponse.virtualmachine[0];
                                     args.response.success({
                                         data: {
-                                            totalCPU: jsonObj.cpunumber + " x " + cloudStack.converters.convertHz(jsonObj.cpuspeed),
+                                            totalCPU: jsonObj.cpunumber + " Cores",
                                             cpuused: jsonObj.cpuused,
                                             memorykbs: jsonObj.memorykbs + " of "+ cloudStack.converters.convertBytes(jsonObj.memory * 1024.0 * 1024.0),
                                             networkkbsread: (jsonObj.networkkbsread == null) ? "N/A" : cloudStack.converters.convertBytes(jsonObj.networkkbsread * 1024),
