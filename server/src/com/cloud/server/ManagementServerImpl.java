@@ -3127,7 +3127,9 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
                     s_logger.debug("Deleting events older than: " + purgeTime.toString());
                     final List<EventVO> oldEvents = _eventDao.listOlderEvents(purgeTime);
                     s_logger.debug("Found " + oldEvents.size() + " events to be purged");
-                    _eventDao.archiveEvents(oldEvents);
+                    for (final EventVO event : oldEvents) {
+                        _eventDao.expunge(event.getId());
+                    }
                 } catch (final Exception e) {
                     s_logger.error("Exception ", e);
                 } finally {
