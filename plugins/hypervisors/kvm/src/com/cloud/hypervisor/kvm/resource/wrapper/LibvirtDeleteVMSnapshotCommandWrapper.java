@@ -93,18 +93,9 @@ public final class LibvirtDeleteVMSnapshotCommandWrapper extends CommandWrapper<
                     }
                 }
                 if (rootVolume != null && ImageFormat.QCOW2.equals(rootVolume.getFormat())) {
-                    PrimaryDataStoreTO primaryStore = (PrimaryDataStoreTO) rootVolume.getDataStore();
-                    KVMPhysicalDisk rootDisk = storagePoolMgr.getPhysicalDisk(primaryStore.getPoolType(),
-                            primaryStore.getUuid(), rootVolume.getPath());
-                    String qemu_img_snapshot = Script.runSimpleBashScript("qemu-img snapshot -l " + rootDisk.getPath() + " | tail -n +3 | awk -F ' ' '{print $2}' | grep ^" + cmd.getTarget().getSnapshotName() + "$");
-                    if (qemu_img_snapshot == null) {
-                        s_logger.info("Cannot find snapshot " + cmd.getTarget().getSnapshotName() + " in file " + rootDisk.getPath() + ", return true");
-                        return new DeleteVMSnapshotAnswer(cmd, cmd.getVolumeTOs());
-                    }
-                    int result = Script.runSimpleBashScriptForExitValue("qemu-img snapshot -d " + cmd.getTarget().getSnapshotName() + " " + rootDisk.getPath());
-                    if (result != 0) {
-                        return new DeleteVMSnapshotAnswer(cmd, false,
-                                "Delete VM Snapshot Failed due to can not remove snapshot from image file " + rootDisk.getPath()  + " : " + result);
+                    String errorMessage = removeVolumeSnapshots(cmd, storagePoolMgr);
+                    if (!errorMessage.isEmpty()) {
+                        return new DeleteVMSnapshotAnswer(cmd, false, errorMessage);
                     } else {
                         return new DeleteVMSnapshotAnswer(cmd, cmd.getVolumeTOs());
                     }
@@ -134,5 +125,23 @@ public final class LibvirtDeleteVMSnapshotCommandWrapper extends CommandWrapper<
                 }
             }
         }
+    }
+
+    private static String removeVolumeSnapshots(DeleteVMSnapshotCommand cmd, KVMStoragePoolManager storagePoolMgr) {
+        for (VolumeObjectTO volume: cmd.getVolumeTOs()) {
+            if (ImageFormat.QCOW2.equals(volume.getFormat())) {
+                PrimaryDataStoreTO primaryStore = (PrimaryDataStoreTO) volume.getDataStore();
+                KVMPhysicalDisk disk = storagePoolMgr.getPhysicalDisk(primaryStore.getPoolType(), primaryStore.getUuid(), volume.getPath());
+                String qemu_img_snapshot = Script.runSimpleBashScript("qemu-img snapshot -l " + disk.getPath() + " | tail -n +3 | awk -F ' ' '{print $2}' | grep ^" + cmd.getTarget().getSnapshotName() + "$");
+                if (qemu_img_snapshot == null) {
+                    s_logger.info("Cannot find snapshot " + cmd.getTarget().getSnapshotName() + " in file " + disk.getPath());
+                }
+                int result = Script.runSimpleBashScriptForExitValue("qemu-img snapshot -d " + cmd.getTarget().getSnapshotName() + " " + disk.getPath());
+                if (result != 0) {
+                    return "Delete VM Snapshot Failed due to can not remove snapshot from image file " + disk.getPath()  + " : " + result;
+                }
+            }
+        }
+        return "";
     }
 }
