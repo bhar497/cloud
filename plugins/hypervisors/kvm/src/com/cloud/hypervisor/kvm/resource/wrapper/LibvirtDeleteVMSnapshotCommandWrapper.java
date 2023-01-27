@@ -40,6 +40,9 @@ import com.cloud.storage.Volume;
 import com.cloud.storage.Storage.ImageFormat;
 import com.cloud.utils.script.Script;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @ResourceWrapper(handles =  DeleteVMSnapshotCommand.class)
 public final class LibvirtDeleteVMSnapshotCommandWrapper extends CommandWrapper<DeleteVMSnapshotCommand, Answer, LibvirtComputingResource> {
 
@@ -128,6 +131,7 @@ public final class LibvirtDeleteVMSnapshotCommandWrapper extends CommandWrapper<
     }
 
     private static String removeVolumeSnapshots(DeleteVMSnapshotCommand cmd, KVMStoragePoolManager storagePoolMgr) {
+        List<String> ret = new ArrayList<>();
         for (VolumeObjectTO volume: cmd.getVolumeTOs()) {
             if (ImageFormat.QCOW2.equals(volume.getFormat())) {
                 PrimaryDataStoreTO primaryStore = (PrimaryDataStoreTO) volume.getDataStore();
@@ -138,10 +142,10 @@ public final class LibvirtDeleteVMSnapshotCommandWrapper extends CommandWrapper<
                 }
                 int result = Script.runSimpleBashScriptForExitValue("qemu-img snapshot -d " + cmd.getTarget().getSnapshotName() + " " + disk.getPath());
                 if (result != 0) {
-                    return "Delete VM Snapshot Failed due to can not remove snapshot from image file " + disk.getPath()  + " : " + result;
+                    ret.add("Delete VM Snapshot Failed due to can not remove snapshot from image file " + disk.getPath()  + " : " + result);
                 }
             }
         }
-        return "";
+        return String.join(", ", ret);
     }
 }
