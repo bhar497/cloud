@@ -875,10 +875,16 @@ public class KVMStorageProcessor implements StorageProcessor {
         final String secondaryStoragePoolUrl = nfsImageStore.getUrl();
         // NOTE: snapshot name is encoded in snapshot path
         final int index = snapshot.getPath().lastIndexOf("/");
-        final boolean isCreatedFromVmSnapshot = (index == -1) ? true: false; // -1 means the snapshot is created from existing vm snapshot
-
-        final String snapshotName = snapshot.getPath().substring(index + 1);
+        final boolean isCreatedFromVmSnapshot = index == -1; // -1 means the snapshot is created from existing vm snapshot
+        boolean skipRemoveSnapshot = isCreatedFromVmSnapshot;
+        String snapshotName = snapshot.getPath().substring(index + 1);
         String descName = snapshotName;
+        // This signifies that it is an ONTAP plugin snapshot, so we change our behavior here
+        if (snapshot.getPath().startsWith("/.snapshot")) {
+            snapshotName = snapshot.getPath();
+            descName = UUID.randomUUID().toString();
+            skipRemoveSnapshot = true;
+        }
         final String volumePath = snapshot.getVolume().getPath();
         String snapshotDestPath = null;
         String snapshotRelPath = null;
@@ -887,6 +893,7 @@ public class KVMStorageProcessor implements StorageProcessor {
         Connect conn = null;
         KVMPhysicalDisk snapshotDisk = null;
         KVMStoragePool primaryPool = null;
+        CopyCmdAnswer answer = null;
         try {
             conn = LibvirtConnection.getConnectionByVmName(vmName);
 
@@ -936,14 +943,14 @@ public class KVMStorageProcessor implements StorageProcessor {
                     s_logger.debug("Finished backing up RBD snapshot " + rbdSnapshot + " to " + snapshotFile + " Snapshot size: " + size);
                 } catch (final FileNotFoundException e) {
                     s_logger.error("Failed to open " + snapshotDestPath + ". The error was: " + e.getMessage());
-                    return new CopyCmdAnswer(e.toString());
+                    answer = appendAnswer(answer, e.toString());
                 } catch (final IOException e) {
                     s_logger.error("Failed to create " + snapshotDestPath + ". The error was: " + e.getMessage());
-                    return new CopyCmdAnswer(e.toString());
+                    answer = appendAnswer(answer, e.toString());
                 }  catch (final QemuImgException e) {
                     s_logger.error("Failed to backup the RBD snapshot from " + rbdSnapshot +
                             " to " + snapshotFile + " the error was: " + e.getMessage());
-                    return new CopyCmdAnswer(e.toString());
+                    answer = appendAnswer(answer, e.toString());
                 }
             } else {
                 final Script command = new Script(_manageSnapshotPath, cmd.getWaitInMillSeconds(), s_logger);
@@ -957,7 +964,7 @@ public class KVMStorageProcessor implements StorageProcessor {
                 final String result = command.execute();
                 if (result != null) {
                     s_logger.debug("Failed to backup snaptshot: " + result);
-                    return new CopyCmdAnswer(result);
+                    answer = appendAnswer(answer, result);
                 }
                 final File snapFile = new File(snapshotDestPath + "/" + descName);
                 if(snapFile.exists()){
@@ -965,19 +972,21 @@ public class KVMStorageProcessor implements StorageProcessor {
                 }
             }
 
-            final SnapshotObjectTO newSnapshot = new SnapshotObjectTO();
-            newSnapshot.setPath(snapshotRelPath + File.separator + descName);
-            newSnapshot.setPhysicalSize(size);
-            return new CopyCmdAnswer(newSnapshot);
+            if (answer == null) {
+                final SnapshotObjectTO newSnapshot = new SnapshotObjectTO();
+                newSnapshot.setPath(snapshotRelPath + File.separator + descName);
+                newSnapshot.setPhysicalSize(size);
+                answer = new CopyCmdAnswer(newSnapshot);
+            }
         } catch (final LibvirtException e) {
             s_logger.debug("Failed to backup snapshot: ", e);
-            return new CopyCmdAnswer(e.toString());
+            answer = appendAnswer(answer, e.toString());
         } catch (final CloudRuntimeException e) {
             s_logger.debug("Failed to backup snapshot: ", e);
-            return new CopyCmdAnswer(e.toString());
+            answer = appendAnswer(answer, e.toString());
         } finally {
-            if (isCreatedFromVmSnapshot) {
-                s_logger.debug("Ignoring removal of vm snapshot on primary as this snapshot is created from vm snapshot");
+            if (skipRemoveSnapshot) {
+                s_logger.debug("Ignoring removal of vm snapshot on primary");
             } else {
                 try {
                     /* Delete the snapshot on primary */
@@ -994,50 +1003,63 @@ public class KVMStorageProcessor implements StorageProcessor {
 
                     final KVMStoragePool primaryStorage = storagePoolMgr.getStoragePool(primaryStore.getPoolType(),
                             primaryStore.getUuid());
-                    if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryStorage.isExternalSnapshot()) {
-                        final DomainSnapshot snap = vm.snapshotLookupByName(snapshotName);
-                        try {
-                            vm.suspend();
-                        } catch(final Exception e) {
-                            s_logger.debug("Failed to suspend the VM: " + e);
-                            throw e;
-                        }
-                        snap.delete(0);
+                        if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryStorage.isExternalSnapshot()) {
+                            final DomainSnapshot snap = vm.snapshotLookupByName(snapshotName);
+                            try {
+                                vm.suspend();
+                            } catch(final Exception e) {
+                                s_logger.debug("Failed to suspend the VM: " + e);
+                                throw e;
+                            }
+                            snap.delete(0);
 
-                        /*
-                         * libvirt on RHEL6 doesn't handle resume event emitted from
-                         * qemu
-                         */
-                        vm = resource.getDomain(conn, vmName);
-                        state = vm.getInfo().state;
-                        if (state == DomainInfo.DomainState.VIR_DOMAIN_PAUSED) {
-                            vm.resume();
-                        }
-                    } else {
-                        if (primaryPool.getType() != StoragePoolType.RBD) {
-                            final Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
-                            command.add("-d", snapshotDisk.getPath());
-                            command.add("-n", snapshotName);
-                            final String result = command.execute();
-                            if (result != null) {
-                                s_logger.debug("Failed to delete snapshot on primary: " + result);
-                                // return new CopyCmdAnswer("Failed to backup snapshot: " + result);
+                            /*
+                             * libvirt on RHEL6 doesn't handle resume event emitted from
+                             * qemu
+                             */
+                            vm = resource.getDomain(conn, vmName);
+                            state = vm.getInfo().state;
+                            if (state == DomainInfo.DomainState.VIR_DOMAIN_PAUSED) {
+                                vm.resume();
+                            }
+                        } else {
+                            if (primaryPool.getType() != StoragePoolType.RBD) {
+                                final Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
+                                command.add("-d", snapshotDisk.getPath());
+                                command.add("-n", snapshotName);
+                                final String result = command.execute();
+                                if (result != null) {
+                                    s_logger.debug("Failed to delete snapshot on primary: " + result);
+                                    answer = appendAnswer(answer, "Failed to delete snapshot on primary: " + result);
+                                }
                             }
                         }
-                    }
                 } catch (final Exception ex) {
                     s_logger.error("Failed to delete snapshots on primary", ex);
+                    answer = appendAnswer(answer, "Failed to delete snapshot on primary: " + ex);
                 }
             }
 
-            try {
-                if (secondaryStoragePool != null) {
+        try {
+            if (secondaryStoragePool != null) {
                     secondaryStoragePool.delete();
                 }
             } catch (final Exception ex) {
                 s_logger.debug("Failed to delete secondary storage", ex);
             }
         }
+        return answer;
+    }
+
+    // This will make a successful answer turn failed
+    private CopyCmdAnswer appendAnswer(CopyCmdAnswer answer, String newDetails) {
+        if (newDetails != null) {
+            if (answer != null) {
+                return new CopyCmdAnswer(newDetails + " : " + answer.getDetails());
+            }
+            return new CopyCmdAnswer(newDetails);
+        }
+        return answer;
     }
 
     protected synchronized String attachOrDetachISO(final Connect conn, final String vmName, String isoPath, final boolean isAttach) throws LibvirtException, URISyntaxException,
