@@ -97,7 +97,7 @@ public class DefaultVMSnapshotStrategy extends ManagerBase implements VMSnapshot
     HostDao hostDao;
 
     public static final ConfigKey<Integer> DeleteTimeout = new ConfigKey<Integer>(Integer.class, "vmsnapshot.delete.wait", "Advanced", "1800",
-            "In second, timeout for delete of vm snapshot", false, ConfigKey.Scope.Global, null);
+            "In seconds, timeout for delete of vm snapshot", false, ConfigKey.Scope.Global, null);
 
     @Override
     public boolean configure(String name, Map<String, Object> params) throws ConfigurationException {
