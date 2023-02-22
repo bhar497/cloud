@@ -30,7 +30,7 @@ public class Upgrade41130to41131 implements DbUpgrade {
 
     @Override
     public void performDataMigration(Connection conn) {
-        try (PreparedStatement stmt = conn.prepareStatement("create table ip_reservation (\n" +
+        try (PreparedStatement stmt = conn.prepareStatement("create table if not exists ip_reservation (\n" +
                 "    id int auto_increment primary key,\n" +
                 "    uuid varchar(40),\n" +
                 "    start_ip varchar(15),\n" +
