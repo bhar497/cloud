@@ -61,6 +61,9 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
         if (network == null) {
             throw new InvalidParameterValueException("Unable to find network: " + cmd.getNetworkId());
         }
+        if (network.getCidr() == null) {
+            throw new InvalidParameterValueException("Network does not currently have a CIDR to identify IPs in");
+        }
         validateAddReservation(cmd, network);
         IpReservationVO create = new IpReservationVO(cmd.getStartIp(), cmd.getEndIp(), network.getId());
         IpReservationVO created = ipReservationDao.persist(create);
@@ -91,6 +94,9 @@ public class IpReservationServiceImpl extends ComponentLifecycleBase implements 
         Network network = networkService.getNetwork(cmd.getNetworkId());
         if (network == null) {
             throw new InvalidParameterValueException("Unable to find network: " + cmd.getNetworkId());
+        }
+        if (network.getCidr() == null) {
+            throw new InvalidParameterValueException("Network does not currently have a CIDR to identify IPs in");
         }
         Long freeIp = networkModel.getAvailableIps(network, null)
                 .stream()
