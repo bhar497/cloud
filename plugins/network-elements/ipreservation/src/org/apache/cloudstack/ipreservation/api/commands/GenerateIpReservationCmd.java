@@ -17,7 +17,7 @@ import org.apache.cloudstack.ipreservation.api.response.IpReservationResponse;
 import javax.inject.Inject;
 
 @APICommand(name = "generateIpReservation", description = "Generate a IP Reservation and return the reserved IP", responseObject = IpReservationResponse.class,
-        responseHasSensitiveInfo = false, requestHasSensitiveInfo = false, since = "4.11.3.0")
+        responseHasSensitiveInfo = false, requestHasSensitiveInfo = false, since = "4.11.3.1")
 public class GenerateIpReservationCmd extends BaseCmd {
     @Inject
     IpReservationService ipReservationService;

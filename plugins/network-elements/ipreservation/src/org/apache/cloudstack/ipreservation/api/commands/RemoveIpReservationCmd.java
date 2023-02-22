@@ -12,7 +12,7 @@ import org.apache.cloudstack.ipreservation.IpReservationService;
 
 import javax.inject.Inject;
 
-@APICommand(name = "removeIpReservation", description = "Remove an IP Reservation", responseObject = SuccessResponse.class, requestHasSensitiveInfo = false, responseHasSensitiveInfo = false, since = "4.11.3.0")
+@APICommand(name = "removeIpReservation", description = "Remove an IP Reservation", responseObject = SuccessResponse.class, requestHasSensitiveInfo = false, responseHasSensitiveInfo = false, since = "4.11.3.1")
 public class RemoveIpReservationCmd extends BaseCmd {
 
     @Inject

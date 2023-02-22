@@ -43,6 +43,7 @@ import com.cloud.upgrade.dao.Upgrade307to410;
 import com.cloud.upgrade.dao.Upgrade30to301;
 import com.cloud.upgrade.dao.Upgrade40to41;
 import com.cloud.upgrade.dao.Upgrade410to420;
+import com.cloud.upgrade.dao.Upgrade41130to41131;
 import com.cloud.upgrade.dao.Upgrade420to421;
 import com.cloud.upgrade.dao.Upgrade421to430;
 import com.cloud.upgrade.dao.Upgrade430to440;
@@ -424,6 +425,9 @@ public class DatabaseUpgradeChecker implements SystemIntegrityChecker {
 
         _upgradeMap.put(CloudStackVersion.parse("4.11.2.0"),
                 new DbUpgrade[] {new Upgrade41120to41130()});
+
+        _upgradeMap.put(CloudStackVersion.parse("4.11.3.0"),
+                new DbUpgrade[] {new Upgrade41130to41131()});
 
         //CP Upgrades
         _upgradeMap.put(CloudStackVersion.parse("3.0.3"),
