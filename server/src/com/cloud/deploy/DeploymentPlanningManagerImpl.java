@@ -34,6 +34,7 @@ import javax.naming.ConfigurationException;
 import com.cloud.utils.db.Filter;
 import com.cloud.utils.fsm.StateMachine2;
 
+import com.cloud.vm.VmDetailConstants;
 import org.apache.cloudstack.cluster.ClusterDrainingManager;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
@@ -1473,7 +1474,7 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
 
             Map<String, String> details = vmProfile.getVirtualMachine().getDetails();
             String storagePoolUuid = null;
-            String storagePoolDetailKey = toBeCreated.getVolumeType() == Volume.Type.ROOT ? "rootDiskStoragePool" : "dataDiskStoragePool";
+            String storagePoolDetailKey = toBeCreated.getVolumeType() == Volume.Type.ROOT ? VmDetailConstants.ROOT_DISK_STORAGE_POOL : VmDetailConstants.DATA_DISK_STORAGE_POOL;
             if (details != null && details.containsKey(storagePoolDetailKey)) {
                 storagePoolUuid = details.get(storagePoolDetailKey);
             }
