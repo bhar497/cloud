@@ -259,7 +259,6 @@ public class ServerDaemon implements Daemon {
         log.setAppend(true);
         log.setLogTimeZone("GMT");
         log.setLogLatency(true);
-        log.setRetainDays(10);
         return log;
     }
 
