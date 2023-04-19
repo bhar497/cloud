@@ -293,6 +293,28 @@
                                         );
                                     });
 
+                                    $(args.data.domains).each(function() {
+                                        $step.find('.select-domain select').append(
+                                            $('<option>')
+                                                .attr({
+                                                    value: this.id,
+                                                    'wizard-field': 'domain'
+                                                })
+                                                .html(this.name)
+                                        )
+                                    })
+
+                                    $(args.data.accounts).each(function() {
+                                        $step.find('.select-account select').append(
+                                            $('<option>')
+                                                .attr({
+                                                    value: this.id,
+                                                    'wizard-field': 'account'
+                                                })
+                                                .html(this.name)
+                                        )
+                                    })
+
                                     originalValues(formData);
                                 }
                             }

@@ -17,9 +17,12 @@
 
 (function($, cloudStack) {
     var zoneObjs, hypervisorObjs, featuredTemplateObjs, communityTemplateObjs, myTemplateObjs, sharedTemplateObjs, featuredIsoObjs, communityIsoObjs, myIsoObjs, sharedIsoObjs, serviceOfferingObjs, community, networkObjs;
+    var accountObjs, domainObjs;
     var selectedZoneObj, selectedTemplateObj, selectedHypervisor, selectedDiskOfferingObj;
+    var selectedAccountObj, selectedDomainObj;
     var selectedTemplateOrIso; //'select-template', 'select-iso'
     var step6ContainerType = 'nothing-to-select'; //'nothing-to-select', 'select-network', 'select-security-group', 'select-advanced-sg'(advanced sg-enabled zone)
+    var zoneDomainAccountFilter, domainAccountFilter;
 
     cloudStack.instanceWizard = {
         //min disk offering  size when custom disk size is used
@@ -100,11 +103,30 @@
                         async: false,
                         success: function(json) {
                             zoneObjs = json.listzonesresponse.zone;
-                            args.response.success({
-                                data: {
-                                    zones: zoneObjs
-                                }
-                            });
+                        }
+                    });
+                    // TODO - Nate: here is where to query domains/accounts
+                    $.ajax({
+                        url: createURL("listDomains&listall=true"),
+                        dataType: "json",
+                        async: false,
+                        success: function(json) {
+                            domainObjs = json.listdomainsresponse.domain;
+                        }
+                    });
+                    $.ajax({
+                        url: createURL("listAccounts&listall=true"),
+                        dataType: "json",
+                        async: false,
+                        success: function(json) {
+                            accountObjs = json.listaccountsresponse.account;
+                        }
+                    });
+                    args.response.success({
+                        data: {
+                            zones: zoneObjs,
+                            domains: domainObjs,
+                            accounts: accountObjs
                         }
                     });
                 }
@@ -134,6 +156,24 @@
 
                 //***** get templates/ISOs (begin) *****
                 selectedTemplateOrIso = args.currentData['select-template'];
+                // TODO - Nate: Need to allow for not selecting a domain/account as well
+                // TODO - Nate: Need to limit this to admins
+                selectedDomainObj = domainObjs.find(d => d.id === args.currentData['domainid']);
+                if (selectedDomainObj == null) {
+                    alert("error: can't find matched domain object");
+                    return;
+                }
+                selectedAccountObj = accountObjs.find(a => a.id === args.currentData['accountid']);
+                if (selectedAccountObj == null) {
+                    alert("error: can't find matched acount object");
+                    return;
+                }
+                if (selectedAccountObj !== null) {
+                    domainAccountFilter = "&domainid=" + selectedDomainObj.id + "&account=" + selectedAccountObj.name;
+                } else {
+                    domainAccountFilter = "";
+                }
+                zoneDomainAccountFilter = "zoneid=" + args.currentData.zoneid + domainAccountFilter;
                 if (selectedTemplateOrIso == 'select-template') {
                     var hypervisorArray = [];
                     $(hypervisorObjs).each(function(index, item) {
@@ -155,8 +195,9 @@
                             }
                         }
                     });
+                    // TODO - Nate: This is where to filter by domain/account
                     $.ajax({
-                        url: createURL("listTemplates&templatefilter=community&zoneid=" + args.currentData.zoneid),
+                        url: createURL("listTemplates&templatefilter=community&" + zoneDomainAccountFilter),
                         dataType: "json",
                         async: false,
                         success: function(json) {
@@ -170,8 +211,9 @@
                             }
                         }
                     });
+                    // TODO - Nate: This is where to filter by domain/account
                     $.ajax({
-                        url: createURL("listTemplates&templatefilter=selfexecutable&zoneid=" + args.currentData.zoneid),
+                        url: createURL("listTemplates&templatefilter=selfexecutable&" + zoneDomainAccountFilter),
                         dataType: "json",
                         async: false,
                         success: function(json) {
@@ -185,8 +227,9 @@
                             }
                         }
                     });
+                    // TODO - Nate: This is where to filter by domain/account
                     $.ajax({
-                        url: createURL("listTemplates&templatefilter=sharedexecutable&zoneid=" + args.currentData.zoneid),
+                        url: createURL("listTemplates&templatefilter=sharedexecutable&" + zoneDomainAccountFilter),
                         dataType: "json",
                         async: false,
                         success: function(json) {
@@ -225,8 +268,9 @@
                             }
                         }
                     });
+                    // TODO - Nate: This is where to filter by domain/account
                     $.ajax({
-                        url: createURL("listIsos&isofilter=selfexecutable&zoneid=" + args.currentData.zoneid + "&bootable=true"),
+                        url: createURL("listIsos&isofilter=selfexecutable&" + zoneDomainAccountFilter + "&bootable=true"),
                         dataType: "json",
                         async: false,
                         success: function(json) {
@@ -237,8 +281,9 @@
                             }
                         }
                     });
+                    // TODO - Nate: This is where to filter by domain/account
                     $.ajax({
-                        url: createURL("listIsos&isofilter=sharedexecutable&zoneid=" + args.currentData.zoneid + "&bootable=true"),
+                        url: createURL("listIsos&isofilter=sharedexecutable&" + zoneDomainAccountFilter + "&bootable=true"),
                         dataType: "json",
                         async: false,
                         success: function(json) {
@@ -478,6 +523,7 @@
                     }
                 }
 
+                // TODO - Nate: Filter by domain/account
                 if (selectedZoneObj.networktype == "Advanced") { //Advanced zone. Show network list.
                     var $networkStep = $(".step.network:visible .nothing-to-select");
                     var $networkStepContainer = $('.step.network:visible');
@@ -508,7 +554,7 @@
                 } else { //Basic zone. Show securigy group list or nothing(when no SecurityGroup service in guest network)
                     var includingSecurityGroupService = false;
                     $.ajax({
-                        url: createURL("listNetworks&trafficType=Guest&zoneId=" + selectedZoneObj.id),
+                        url: createURL("listNetworks&trafficType=Guest" + domainAccountFilter),
                         dataType: "json",
                         async: false,
                         success: function(json) {
@@ -552,6 +598,11 @@
                     if (!(cloudStack.context.projects && cloudStack.context.projects[0])) {
                         networkData.domainid = g_domainid;
                         networkData.account = g_account;
+                    }
+
+                    if (selectedAccountObj !== null) {
+                        networkData.domainid = selectedDomainObj.id;
+                        networkData.account = selectedAccountObj.name;
                     }
 
                     var vpcObjs;
@@ -624,6 +675,10 @@
                                 zoneId: allOtherAdvancedZones[i].id,
                                 canusefordeploy: true
                             };
+                            if (selectedAccountObj !== null) {
+                                networkDataForZone.domainid = selectedDomainObj.id;
+                                networkDataForZone.account = selectedAccountObj.name;
+                            }
                             $.ajax({
                                 url: createURL('listNetworks'),
                                 data: networkDataForZone,
@@ -702,6 +757,11 @@
                         account: g_account
                     };
 
+                    if (selectedAccountObj !== null) {
+                        data.domainid = selectedDomainObj.id;
+                        data.account = selectedAccountObj.name;
+                    }
+
                     $.ajax({
                         url: createURL("listSecurityGroups"),
                         dataType: "json",
@@ -747,7 +807,7 @@
             // Step 7: SSH Key Pairs
             function(args) {
                 $.ajax({
-                    url: createURL('listSSHKeyPairs'),
+                    url: createURL('listSSHKeyPairs' + domainAccountFilter),
                     success: function(json) {
                         var sshkeypair = json.listsshkeypairsresponse.sshkeypair;
                         args.response.success({
@@ -905,6 +965,11 @@
                         displayText: args.data["new-network-name"],
                         zoneId: selectedZoneObj.id
                     };
+
+                    if (selectedAccountObj !== null) {
+                        createNetworkData.domainid = selectedDomainObj.id;
+                        createNetworkData.account = selectedAccountObj.name;
+                    }
 
                     $.ajax({
                         url: createURL('createNetwork'),
@@ -1089,6 +1154,13 @@
             if (g_hostid != null) {
                 $.extend(deployVmData, {
                     hostid : g_hostid
+                });
+            }
+
+            if (selectedAccountObj !== null) {
+                $.extend(deployVmData, {
+                    domainid: selectedDomainObj.id,
+                    account: selectedAccountObj.name
                 });
             }
 
