@@ -105,23 +105,24 @@
                             zoneObjs = json.listzonesresponse.zone;
                         }
                     });
-                    // TODO - Nate: here is where to query domains/accounts
-                    $.ajax({
-                        url: createURL("listDomains&listall=true"),
-                        dataType: "json",
-                        async: false,
-                        success: function(json) {
-                            domainObjs = json.listdomainsresponse.domain;
-                        }
-                    });
-                    $.ajax({
-                        url: createURL("listAccounts&listall=true"),
-                        dataType: "json",
-                        async: false,
-                        success: function(json) {
-                            accountObjs = json.listaccountsresponse.account;
-                        }
-                    });
+                    if (isAdmin() || isDomainAdmin()) {
+                        $.ajax({
+                            url: createURL("listDomains&listall=true"),
+                            dataType: "json",
+                            async: false,
+                            success: function(json) {
+                                domainObjs = json.listdomainsresponse.domain;
+                            }
+                        });
+                        $.ajax({
+                            url: createURL("listAccounts&listall=true"),
+                            dataType: "json",
+                            async: false,
+                            success: function(json) {
+                                accountObjs = json.listaccountsresponse.account;
+                            }
+                        });
+                    }
                     args.response.success({
                         data: {
                             zones: zoneObjs,
@@ -156,19 +157,19 @@
 
                 //***** get templates/ISOs (begin) *****
                 selectedTemplateOrIso = args.currentData['select-template'];
-                // TODO - Nate: Need to allow for not selecting a domain/account as well
-                // TODO - Nate: Need to limit this to admins
-                selectedDomainObj = domainObjs.find(d => d.id === args.currentData['domainid']);
-                if (selectedDomainObj == null) {
-                    alert("error: can't find matched domain object");
-                    return;
+                if ((isAdmin() || isDomainAdmin()) && args.currentData['domainid']) {
+                    selectedDomainObj = domainObjs.find(d => d.id === args.currentData['domainid']);
+                    if (selectedDomainObj == null) {
+                        alert("error: can't find matched domain object");
+                        return;
+                    }
+                    selectedAccountObj = accountObjs.find(a => a.id === args.currentData['accountid']);
+                    if (selectedAccountObj == null) {
+                        alert("error: can't find matched acount object");
+                        return;
+                    }
                 }
-                selectedAccountObj = accountObjs.find(a => a.id === args.currentData['accountid']);
-                if (selectedAccountObj == null) {
-                    alert("error: can't find matched acount object");
-                    return;
-                }
-                if (selectedAccountObj !== null) {
+                if (selectedAccountObj !== undefined) {
                     domainAccountFilter = "&domainid=" + selectedDomainObj.id + "&account=" + selectedAccountObj.name;
                 } else {
                     domainAccountFilter = "";
@@ -195,7 +196,6 @@
                             }
                         }
                     });
-                    // TODO - Nate: This is where to filter by domain/account
                     $.ajax({
                         url: createURL("listTemplates&templatefilter=community&" + zoneDomainAccountFilter),
                         dataType: "json",
@@ -211,7 +211,6 @@
                             }
                         }
                     });
-                    // TODO - Nate: This is where to filter by domain/account
                     $.ajax({
                         url: createURL("listTemplates&templatefilter=selfexecutable&" + zoneDomainAccountFilter),
                         dataType: "json",
@@ -227,7 +226,6 @@
                             }
                         }
                     });
-                    // TODO - Nate: This is where to filter by domain/account
                     $.ajax({
                         url: createURL("listTemplates&templatefilter=sharedexecutable&" + zoneDomainAccountFilter),
                         dataType: "json",
@@ -268,7 +266,6 @@
                             }
                         }
                     });
-                    // TODO - Nate: This is where to filter by domain/account
                     $.ajax({
                         url: createURL("listIsos&isofilter=selfexecutable&" + zoneDomainAccountFilter + "&bootable=true"),
                         dataType: "json",
@@ -281,7 +278,6 @@
                             }
                         }
                     });
-                    // TODO - Nate: This is where to filter by domain/account
                     $.ajax({
                         url: createURL("listIsos&isofilter=sharedexecutable&" + zoneDomainAccountFilter + "&bootable=true"),
                         dataType: "json",
@@ -523,7 +519,6 @@
                     }
                 }
 
-                // TODO - Nate: Filter by domain/account
                 if (selectedZoneObj.networktype == "Advanced") { //Advanced zone. Show network list.
                     var $networkStep = $(".step.network:visible .nothing-to-select");
                     var $networkStepContainer = $('.step.network:visible');
@@ -600,7 +595,7 @@
                         networkData.account = g_account;
                     }
 
-                    if (selectedAccountObj !== null) {
+                    if (selectedAccountObj !== undefined) {
                         networkData.domainid = selectedDomainObj.id;
                         networkData.account = selectedAccountObj.name;
                     }
@@ -675,7 +670,7 @@
                                 zoneId: allOtherAdvancedZones[i].id,
                                 canusefordeploy: true
                             };
-                            if (selectedAccountObj !== null) {
+                            if (selectedAccountObj !== undefined) {
                                 networkDataForZone.domainid = selectedDomainObj.id;
                                 networkDataForZone.account = selectedAccountObj.name;
                             }
@@ -757,7 +752,7 @@
                         account: g_account
                     };
 
-                    if (selectedAccountObj !== null) {
+                    if (selectedAccountObj !== undefined) {
                         data.domainid = selectedDomainObj.id;
                         data.account = selectedAccountObj.name;
                     }
@@ -966,7 +961,7 @@
                         zoneId: selectedZoneObj.id
                     };
 
-                    if (selectedAccountObj !== null) {
+                    if (selectedAccountObj !== undefined) {
                         createNetworkData.domainid = selectedDomainObj.id;
                         createNetworkData.account = selectedAccountObj.name;
                     }
@@ -1157,7 +1152,7 @@
                 });
             }
 
-            if (selectedAccountObj !== null) {
+            if (selectedAccountObj !== undefined) {
                 $.extend(deployVmData, {
                     domainid: selectedDomainObj.id,
                     account: selectedAccountObj.name

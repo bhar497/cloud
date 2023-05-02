@@ -5862,11 +5862,11 @@ label.error {
 }
 
 .multi-wizard .content .section.select-zone {
-  height: 117px;
+  /*height: 117px;*/
 }
 
 .multi-wizard .content .section.select-template {
-  height: 206px;
+  /*height: 206px;*/
 }
 
 .multi-wizard .content.tab-view {

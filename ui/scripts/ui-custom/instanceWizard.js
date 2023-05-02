@@ -277,6 +277,7 @@
                                 return $(this).val() == formData['select-template'];
                             }).click();
                         };
+                        $step.find('.select-domain-account').hide();
 
                         return {
                             response: {
@@ -293,39 +294,42 @@
                                         );
                                     });
 
-                                    $step.find('.select-domain select').append(
-                                        $('<option>')
-                                            .attr({
-                                                value: '',
-                                                'wizard-field': 'domain'
-                                            })
-                                            .html("Domain")
-                                    ).change(function(e) {
-                                        // Update account select
-                                        let domainAccounts = args.data.accounts.filter(a => a.domainid === e.target.value);
-                                        $step.find('.select-account select').empty();
-                                        $(domainAccounts).each(function(i, a) {
-                                            $step.find('.select-account select').append(
-                                                $('<option>')
-                                                    .attr({
-                                                        value: a.id,
-                                                        'wizard-field': 'account'
-                                                    })
-                                                    .html(a.name)
-                                            )
-                                        });
-                                    });
-
-                                    $(args.data.domains).each(function() {
+                                    if (args.data.domains) {
+                                        $step.find('.select-domain-account').show();
                                         $step.find('.select-domain select').append(
                                             $('<option>')
                                                 .attr({
-                                                    value: this.id,
+                                                    value: '',
                                                     'wizard-field': 'domain'
                                                 })
-                                                .html(this.name)
-                                        )
-                                    });
+                                                .html("Default Domain")
+                                        ).change(function(e) {
+                                            // Update account select
+                                            let domainAccounts = args.data.accounts.filter(a => a.domainid === e.target.value);
+                                            $step.find('.select-account select').empty();
+                                            $(domainAccounts).each(function(i, a) {
+                                                $step.find('.select-account select').append(
+                                                    $('<option>')
+                                                        .attr({
+                                                            value: a.id,
+                                                            'wizard-field': 'account'
+                                                        })
+                                                        .html(a.name)
+                                                )
+                                            });
+                                        });
+
+                                        $(args.data.domains).each(function() {
+                                            $step.find('.select-domain select').append(
+                                                $('<option>')
+                                                    .attr({
+                                                        value: this.id,
+                                                        'wizard-field': 'domain'
+                                                    })
+                                                    .html(this.name)
+                                            )
+                                        });
+                                    }
 
                                     originalValues(formData);
                                 }
@@ -1397,7 +1401,7 @@
                 return $wizard.dialog({
                     title: _l('label.vm.add'),
                     width: 896,
-                    height: 570,
+                    height: 620,
                     closeOnEscape: false,
                     zIndex: 5000
                 })
