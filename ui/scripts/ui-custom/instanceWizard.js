@@ -307,17 +307,36 @@
                                             // Update account select
                                             let domainAccounts = args.data.accounts.filter(a => a.domainid === e.target.value);
                                             $step.find('.select-account select').empty();
-                                            $(domainAccounts).each(function(i, a) {
+                                            if (domainAccounts.length) {
+                                                $(domainAccounts).each(function(i, a) {
+                                                    $step.find('.select-account select').append(
+                                                        $('<option>')
+                                                            .attr({
+                                                                value: a.id,
+                                                                'wizard-field': 'account'
+                                                            })
+                                                            .html(a.name)
+                                                    )
+                                                });
+                                            } else {
                                                 $step.find('.select-account select').append(
                                                     $('<option>')
                                                         .attr({
-                                                            value: a.id,
+                                                            value: '',
                                                             'wizard-field': 'account'
                                                         })
-                                                        .html(a.name)
-                                                )
-                                            });
+                                                        .html("Default Account")
+                                                );
+                                            }
                                         });
+                                        $step.find('.select-account select').append(
+                                            $('<option>')
+                                                .attr({
+                                                    value: '',
+                                                    'wizard-field': 'account'
+                                                })
+                                                .html("Default Account")
+                                        );
 
                                         $(args.data.domains).each(function() {
                                             $step.find('.select-domain select').append(
