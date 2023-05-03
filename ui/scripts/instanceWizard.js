@@ -112,6 +112,11 @@
                             async: false,
                             success: function(json) {
                                 domainObjs = json.listdomainsresponse.domain;
+                                domainObjs.sort((a, b) => {
+                                    if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+                                    if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+                                    return 0;
+                                });
                             }
                         });
                         $.ajax({
@@ -120,6 +125,11 @@
                             async: false,
                             success: function(json) {
                                 accountObjs = json.listaccountsresponse.account;
+                                accountObjs.sort((a, b) => {
+                                    if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+                                    if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+                                    return 0;
+                                });
                             }
                         });
                     }
