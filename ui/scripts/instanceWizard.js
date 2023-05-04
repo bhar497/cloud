@@ -113,8 +113,8 @@
                             success: function(json) {
                                 domainObjs = json.listdomainsresponse.domain;
                                 domainObjs.sort((a, b) => {
-                                    if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
-                                    if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+                                    if (a.path.toLowerCase() < b.path.toLowerCase()) return -1;
+                                    if (a.path.toLowerCase() > b.path.toLowerCase()) return 1;
                                     return 0;
                                 });
                             }
@@ -171,11 +171,13 @@
                     selectedDomainObj = domainObjs.find(d => d.id === args.currentData['domainid']);
                     if (selectedDomainObj == null) {
                         alert("error: can't find matched domain object");
+                        arts.response.error("Can't find domain object")
                         return;
                     }
                     selectedAccountObj = accountObjs.find(a => a.id === args.currentData['accountid']);
                     if (selectedAccountObj == null) {
-                        alert("error: can't find matched acount object");
+                        alert("error: Invalid Account");
+                        arts.response.error("Invalid Account")
                         return;
                     }
                 }

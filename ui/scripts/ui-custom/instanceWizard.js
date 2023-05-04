@@ -318,7 +318,7 @@
                                                             .html(a.name)
                                                     )
                                                 });
-                                            } else {
+                                            } else if (e.target.value === '') {
                                                 $step.find('.select-account select').append(
                                                     $('<option>')
                                                         .attr({
@@ -326,6 +326,15 @@
                                                             'wizard-field': 'account'
                                                         })
                                                         .html("Default Account")
+                                                );
+                                            } else {
+                                                $step.find('.select-account select').append(
+                                                    $('<option>')
+                                                        .attr({
+                                                            value: '',
+                                                            'wizard-field': 'account'
+                                                        })
+                                                        .html("No Accounts")
                                                 );
                                             }
                                         });
@@ -345,7 +354,7 @@
                                                         value: this.id,
                                                         'wizard-field': 'domain'
                                                     })
-                                                    .html(this.name)
+                                                    .html(this.path)
                                             )
                                         });
                                     }
