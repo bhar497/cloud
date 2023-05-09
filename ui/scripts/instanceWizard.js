@@ -158,13 +158,22 @@
                     selectedDomainObj = domainObjs.find(d => d.id === args.currentData['domainid']);
                     if (selectedDomainObj == null) {
                         alert("error: can't find matched domain object");
-                        arts.response.error("Can't find domain object")
+                        args.response.error("Can't find domain object")
                         return;
                     }
-                    selectedAccountObj = accountObjs.find(a => a.id === args.currentData['accountid']);
+                    $.ajax({
+                        url: createURL("listAccounts&listAll=false&state=Enabled&id=" + args.currentData['accountid']),
+                        dataType: "json",
+                        async: false,
+                        success: function(json) {
+                            if (json.listaccountsresponse.account !== undefined) {
+                                selectedAccountObj = json.listaccountsresponse.account[0];
+                            }
+                        }
+                    });
                     if (selectedAccountObj == null) {
                         alert("error: Invalid Account");
-                        arts.response.error("Invalid Account")
+                        args.response.error("Invalid Account")
                         return;
                     }
                 }
