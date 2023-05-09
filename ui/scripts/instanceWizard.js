@@ -119,19 +119,6 @@
                                 });
                             }
                         });
-                        $.ajax({
-                            url: createURL("listAccounts&listall=true"),
-                            dataType: "json",
-                            async: false,
-                            success: function(json) {
-                                accountObjs = json.listaccountsresponse.account;
-                                accountObjs.sort((a, b) => {
-                                    if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
-                                    if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
-                                    return 0;
-                                });
-                            }
-                        });
                     }
                     args.response.success({
                         data: {

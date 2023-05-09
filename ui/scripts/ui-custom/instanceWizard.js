@@ -305,20 +305,8 @@
                                                 .html("Default Domain")
                                         ).change(function(e) {
                                             // Update account select
-                                            let domainAccounts = args.data.accounts.filter(a => a.domainid === e.target.value);
                                             $step.find('.select-account select').empty();
-                                            if (domainAccounts.length) {
-                                                $(domainAccounts).each(function(i, a) {
-                                                    $step.find('.select-account select').append(
-                                                        $('<option>')
-                                                            .attr({
-                                                                value: a.id,
-                                                                'wizard-field': 'account'
-                                                            })
-                                                            .html(a.name)
-                                                    )
-                                                });
-                                            } else if (e.target.value === '') {
+                                            if (e.target.value === '') {
                                                 $step.find('.select-account select').append(
                                                     $('<option>')
                                                         .attr({
@@ -328,14 +316,41 @@
                                                         .html("Default Account")
                                                 );
                                             } else {
-                                                $step.find('.select-account select').append(
-                                                    $('<option>')
-                                                        .attr({
-                                                            value: '',
-                                                            'wizard-field': 'account'
-                                                        })
-                                                        .html("No Accounts")
-                                                );
+                                                let accountObjs = [];
+                                                $.ajax({
+                                                    url: createURL("listAccounts&listAll=false&state=Enabled&domainId=" + e.target.value),
+                                                    dataType: "json",
+                                                    async: false,
+                                                    success: function(json) {
+                                                        accountObjs = json.listaccountsresponse.account;
+                                                    }
+                                                });
+                                                if (accountObjs !== undefined) {
+                                                    accountObjs.sort((a, b) => {
+                                                        if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+                                                        if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+                                                        return 0;
+                                                    });
+                                                    $(accountObjs).each(function(i, a) {
+                                                        $step.find('.select-account select').append(
+                                                            $('<option>')
+                                                                .attr({
+                                                                    value: a.id,
+                                                                    'wizard-field': 'account'
+                                                                })
+                                                                .html(a.name)
+                                                        )
+                                                    });
+                                                } else {
+                                                    $step.find('.select-account select').append(
+                                                        $('<option>')
+                                                            .attr({
+                                                                value: '',
+                                                                'wizard-field': 'account'
+                                                            })
+                                                            .html("No Accounts")
+                                                    );
+                                                }
                                             }
                                         });
                                         $step.find('.select-account select').append(
