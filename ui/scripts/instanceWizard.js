@@ -17,7 +17,7 @@
 
 (function($, cloudStack) {
     var zoneObjs, hypervisorObjs, featuredTemplateObjs, communityTemplateObjs, myTemplateObjs, sharedTemplateObjs, featuredIsoObjs, communityIsoObjs, myIsoObjs, sharedIsoObjs, serviceOfferingObjs, community, networkObjs;
-    var accountObjs, domainObjs;
+    var domainObjs;
     var selectedZoneObj, selectedTemplateObj, selectedHypervisor, selectedDiskOfferingObj;
     var selectedAccountObj, selectedDomainObj;
     var selectedTemplateOrIso; //'select-template', 'select-iso'
@@ -124,7 +124,6 @@
                         data: {
                             zones: zoneObjs,
                             domains: domainObjs,
-                            accounts: accountObjs
                         }
                     });
                 }
@@ -557,7 +556,7 @@
                 } else { //Basic zone. Show securigy group list or nothing(when no SecurityGroup service in guest network)
                     var includingSecurityGroupService = false;
                     $.ajax({
-                        url: createURL("listNetworks&trafficType=Guest" + domainAccountFilter),
+                        url: createURL("listNetworks&trafficType=Guest" + zoneDomainAccountFilter),
                         dataType: "json",
                         async: false,
                         success: function(json) {
