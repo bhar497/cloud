@@ -166,6 +166,27 @@ public final class CloudStackVersion implements Comparable<CloudStackVersion> {
 
     }
 
+    public int compareToWithoutSecurity(final CloudStackVersion thatVersion) {
+
+        if (thatVersion == null) {
+            return 1;
+        }
+
+        // Normalize the versions to be 4 positions for the purposes of comparison ...
+        final ImmutableList<Integer> values = normalizeVersionValues(asListWithoutSecurity());
+        final ImmutableList<Integer> thoseValues = normalizeVersionValues(thatVersion.asListWithoutSecurity());
+
+        for (int i = 0; i < values.size(); i++) {
+            final int result = values.get(i).compareTo(thoseValues.get(i));
+            if (result != 0) {
+                return result;
+            }
+        }
+
+        return 0;
+
+    }
+
     /**
      *
      * @return The components of this version as an {@link ImmutableList} in order of major release, minor release,
@@ -185,6 +206,14 @@ public final class CloudStackVersion implements Comparable<CloudStackVersion> {
 
         return values.build();
 
+    }
+
+    public ImmutableList<Integer> asListWithoutSecurity() {
+
+        final ImmutableList.Builder<Integer> values = ImmutableList.<Integer>builder().add
+                (majorRelease, minorRelease, patchRelease);
+
+        return values.build();
     }
 
     @Override
