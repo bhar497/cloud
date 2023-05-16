@@ -658,7 +658,8 @@ public class DatabaseUpgradeChecker implements SystemIntegrityChecker {
                 final CloudStackVersion currentVersion = CloudStackVersion.parse(currentVersionValue);
                 s_logger.info("DB version = " + dbVersion + " Code Version = " + currentVersion);
 
-                if (dbVersion.compareTo(currentVersion) > 0) {
+                // Bypass this check, but only for security patches. This allows for testing in dev and lab going back and forth in versions.
+                if (dbVersion.compareToWithoutSecurity(currentVersion) > 0) {
                     throw new CloudRuntimeException("Database version " + dbVersion + " is higher than management software version " + currentVersionValue);
                 }
 
