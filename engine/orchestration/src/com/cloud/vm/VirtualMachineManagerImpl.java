@@ -951,6 +951,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         final User caller = cctxt.getCallingUser();
 
         VMInstanceVO vm = _vmDao.findByUuid(vmUuid);
+        Map<String, String> details = _vmDetailsDao.listDetailsKeyPairs(vm.getId());
+        vm.setDetails(details);
 
         final VirtualMachineGuru vmGuru = getVmGuru(vm);
 
@@ -1059,7 +1061,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                 final VirtualMachineProfileImpl vmProfile = new VirtualMachineProfileImpl(vm, template, offering, owner, params);
                 DeployDestination dest = null;
                 try {
-                    dest = _dpMgr.planDeployment(vmProfile, plan, avoids, planner);
+                    dest = _dpMgr.planDeployment(vmProfile, plan, avoids, planner, false);
                 } catch (final AffinityConflictException e2) {
                     s_logger.warn("Unable to create deployment, affinity rules associted to the VM conflict", e2);
                     throw new CloudRuntimeException("Unable to create deployment, affinity rules associted to the VM conflict");
@@ -2737,7 +2739,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         while (true) {
 
             try {
-                dest = _dpMgr.planDeployment(profile, plan, excludes, planner);
+                dest = _dpMgr.planDeployment(profile, plan, excludes, planner, true);
             } catch (final AffinityConflictException e2) {
                 s_logger.warn("Unable to create deployment, affinity rules associted to the VM conflict", e2);
                 throw new CloudRuntimeException("Unable to create deployment, affinity rules associted to the VM conflict");
@@ -3590,7 +3592,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         DeployDestination dest = null;
 
         try {
-            dest = _dpMgr.planDeployment(profile, plan, excludes, null);
+            dest = _dpMgr.planDeployment(profile, plan, excludes, null, true);
         } catch (final AffinityConflictException e2) {
             s_logger.warn("Unable to create deployment, affinity rules associted to the VM conflict", e2);
             throw new CloudRuntimeException("Unable to create deployment, affinity rules associted to the VM conflict");
