@@ -663,7 +663,7 @@ public class DatabaseUpgradeChecker implements SystemIntegrityChecker {
                     throw new CloudRuntimeException("Database version " + dbVersion + " is higher than management software version " + currentVersionValue);
                 }
 
-                if (dbVersion.compareTo(currentVersion) == 0) {
+                if (dbVersion.compareTo(currentVersion) >= 0) {
                     s_logger.info("DB version and code version matches so no upgrade needed.");
                     return;
                 }
