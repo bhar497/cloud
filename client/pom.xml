@@ -17,7 +17,7 @@
   <parent>
     <groupId>org.apache.cloudstack</groupId>
     <artifactId>cloudstack</artifactId>
-    <version>4.11.3.0</version>
+    <version>4.11.3.1</version>
   </parent>
 
   <repositories>
@@ -190,6 +190,11 @@
     <dependency>
       <groupId>org.apache.cloudstack</groupId>
       <artifactId>cloud-plugin-network-internallb</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cloudstack</groupId>
+      <artifactId>cloud-plugin-ipreservation</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
