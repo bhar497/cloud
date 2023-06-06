@@ -328,9 +328,11 @@ public class CAManagerImpl extends ManagerBase implements CAManager {
                     final String hostDescription = String.format("host id=%d, uuid=%s, name=%s, ip=%s, zone id=%d",
                             host.getId(), host.getUuid(), host.getName(), hostIp, host.getDataCenterId());
 
-                    try {
-                        certificate.checkValidity(now.plusDays(CertExpiryAlertPeriod.valueIn(host.getClusterId())).toDate());
-                    } catch (final CertificateExpiredException | CertificateNotYetValidException e) {
+                    DateTime notAfter = new DateTime(certificate.getNotAfter());
+                    DateTime alertDate = notAfter.minusDays(CertExpiryAlertPeriod.valueIn(host.getClusterId()));
+                    DateTime warnDate = alertDate.minusDays(CertExpiryWarningPeriod.valueIn(host.getClusterId()));
+
+                    if (now.isAfter(alertDate)) {
                         LOG.warn("Certificate is going to expire for " + hostDescription);
                         if (AutomaticCertRenewal.valueIn(host.getClusterId())) {
                             try {
@@ -358,6 +360,16 @@ public class CAManagerImpl extends ManagerBase implements CAManager {
                                             hostDescription, certificate.getNotAfter()));
                             alertMap.put(hostIp, new Date());
                         }
+                    } else if (now.isAfter(warnDate)) {
+                        if (alertMap.containsKey(hostIp)) {
+                            final Date lastSentDate = alertMap.get(hostIp);
+                            if (now.minusDays(1).toDate().before(lastSentDate)) {
+                                continue;
+                            }
+                        }
+                        caManager.sendAlert(host, "Certificate expiring soon for " + hostDescription,
+                                String.format("Certificate is going to expire for %s on %s. It will auto renew in %s days before that.", hostDescription, certificate.getNotAfter(), CertExpiryAlertPeriod.valueIn(host.getClusterId())));
+                        alertMap.put(hostIp, new Date());
                     }
                 }
             } catch (final Throwable t) {
@@ -433,7 +445,8 @@ public class CAManagerImpl extends ManagerBase implements CAManager {
                 CertValidityPeriod,
                 AutomaticCertRenewal,
                 CABackgroundJobDelay,
-                CertExpiryAlertPeriod
+                CertExpiryAlertPeriod,
+                CertExpiryWarningPeriod
         };
     }
 }
