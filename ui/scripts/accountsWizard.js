@@ -17,7 +17,7 @@
 
 (function(cloudStack, $) {
     var rootDomainId;
-
+    const forceSso = g_idpList && !isAdmin();
 
     cloudStack.accountsWizard = {
 
@@ -174,6 +174,9 @@
                 isBoolean: true,
                 validation: {
                     required: false
+                },
+                isHidden: function() {
+                    return !isAdmin();
                 }
             },
             samlEntity: {
@@ -265,7 +268,7 @@
                         type: "POST",
                         async: false,
                         success: function (json) {
-                            if (json.ldapuserresponse && args.data.samlEnable && args.data.samlEnable === 'on') {
+                            if (json.ldapuserresponse && (forceSso || (args.data.samlEnable && args.data.samlEnable === 'on'))) {
                                 cloudStack.dialog.notice({
                                     message: "Unable to find users IDs to enable SAML Single Sign On, kindly enable it manually."
                                 });
@@ -282,7 +285,7 @@
                         type: "POST",
                         async: false,
                         success: function(json) {
-                            if (args.data.samlEnable && args.data.samlEnable === 'on') {
+                            if (forceSso || (args.data.samlEnable && args.data.samlEnable === 'on')) {
                                 var users = json.createaccountresponse.account.user;
                                 var entity = args.data.samlEntity;
                                 if (users && entity)
@@ -301,7 +304,7 @@
                     type: "POST",
                     async: false,
                     success: function(json) {
-                        if (args.data.samlEnable && args.data.samlEnable === 'on') {
+                        if (forceSso || (args.data.samlEnable && args.data.samlEnable === 'on')) {
                             var users = json.createaccountresponse.account.user;
                             var entity = args.data.samlEntity;
                             if (users && entity)

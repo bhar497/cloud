@@ -18,6 +18,7 @@
 
     var domainObjs;
     var roleObjs;
+    const forceSso = g_idpList && !isAdmin();
 
     cloudStack.sections.accounts = {
         title: 'label.accounts',
@@ -1294,9 +1295,8 @@
                                         validation: {
                                             required: false
                                         },
-                                        isHidden: function (args) {
-                                            if (g_idpList) return false;
-                                            return true;
+                                        isHidden: function () {
+                                            return !(g_idpList && isAdmin());
                                         }
                                     },
                                     samlEntity: {
@@ -1404,7 +1404,7 @@
                                     data: data,
                                     success: function(json) {
                                         var item = json.createuserresponse.user;
-                                        if (args.data.samlEnable && args.data.samlEnable === 'on') {
+                                        if (forceSso || (args.data.samlEnable && args.data.samlEnable === 'on')) {
                                             var entity = args.data.samlEntity;
                                             if (item && entity)
                                                 authorizeUsersForSamlSSO([item], entity);
