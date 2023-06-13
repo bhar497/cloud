@@ -95,6 +95,13 @@
 
         // Login action
         var selectedLogin = 'cloudstack';
+        var localLogin = $.urlParam('local_login');
+        if (localLogin !== 'true') {
+            args.samlLoginAction({
+                data: {'idpid': g_idpList[0].id}
+            })
+        }
+
         $login.find('#login-submit').click(function() {
             var selectedOption = $login.find('#login-options').find(':selected').val();
             if ((selectedLogin === 'cloudstack' || selectedLogin === 'saml') && selectedOption && selectedOption !== '') {
