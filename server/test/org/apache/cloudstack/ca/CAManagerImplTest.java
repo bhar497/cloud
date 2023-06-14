@@ -30,7 +30,6 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 
 import com.cloud.alert.AlertManager;
