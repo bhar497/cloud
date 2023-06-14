@@ -30,6 +30,7 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 
 import com.cloud.alert.AlertManager;
@@ -104,12 +105,15 @@ public class CAManagerImplTest {
         addField(caManager, "agentManager", agentManager);
         addField(caManager, "configuredCaProvider", caProvider);
         addField(caManager, "alertManager", alertManager);
+        // This is because it is using a static variable in the class. So each test contaminates the next.
+        caManager.getAlertMap().clear();
 
         Mockito.when(caProvider.getProviderName()).thenReturn("root");
         caManager.setCaProviders(Collections.singletonList(caProvider));
         ConfigKey.init(configDepot);
         setupHost();
         task = new CAManagerImpl.CABackgroundTask(caManager, hostDao);
+        Mockito.when(configDepot.global()).thenReturn(configDao);
     }
 
     @After
@@ -197,7 +201,7 @@ public class CAManagerImplTest {
 
         task.runInContext();
 
-        verifyAlerts("Certificate auto-renewal succeeded for host.*", "Certificate auto-renewal succeeded for.*");
+        verifyAlerts("Certificate auto-renewal succeeded for host.*", "Certificate auto-renew succeeded for.*");
     }
 
     @Test
@@ -229,7 +233,7 @@ public class CAManagerImplTest {
 
         task.runInContext();
 
-        verifyAlerts("Certificate auto-renewal failed for host.*", String.format("Certificate is going to expire for.* Error in auto-renewal failed to renew the certificate, please renew it manually. It is not valid after %s.", cert.getNotAfter()));
+        verifyAlerts("Certificate auto-renewal failed for host.*", String.format("Certificate is going to expire for.* Error in auto-renewal, failed to renew the certificate, please renew it manually. It is not valid after %s.", cert.getNotAfter()));
     }
 
     private static X509Certificate getX509Certificate() throws NoSuchProviderException, NoSuchAlgorithmException, IOException, CertificateException, InvalidKeyException, SignatureException, OperatorCreationException {
@@ -258,7 +262,6 @@ public class CAManagerImplTest {
     void setupConfig(ConfigKey<?> key, String value) {
         Mockito.when(configDepot.scoped(key)).thenReturn(clusterStorage);
         Mockito.when(clusterStorage.getConfigValue(1, key)).thenReturn(value);
-        Mockito.when(configDepot.global()).thenReturn(configDao);
         Mockito.when(configDao.findById(key.key())).thenReturn(new ConfigurationVO("testing", key.key(), "testing", key.key(), value, key.description()));
     }
 

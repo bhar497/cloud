@@ -133,6 +133,10 @@ public class CAManagerImpl extends ManagerBase implements CAManager {
         return activeCertMap;
     }
 
+    protected Map<String, Date> getAlertMap() {
+        return alertMap;
+    }
+
     @Override
     public boolean canProvisionCertificates() {
         return getConfiguredCaProvider().canProvisionCertificates();
