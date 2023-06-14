@@ -133,7 +133,7 @@ public class CAManagerImpl extends ManagerBase implements CAManager {
         return activeCertMap;
     }
 
-    protected Map<String, Date> getAlertMap() {
+    protected static Map<String, Date> getAlertMap() {
         return alertMap;
     }
 
