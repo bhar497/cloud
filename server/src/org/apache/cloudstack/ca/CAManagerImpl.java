@@ -133,6 +133,10 @@ public class CAManagerImpl extends ManagerBase implements CAManager {
         return activeCertMap;
     }
 
+    protected static Map<String, Date> getAlertMap() {
+        return alertMap;
+    }
+
     @Override
     public boolean canProvisionCertificates() {
         return getConfiguredCaProvider().canProvisionCertificates();
@@ -326,7 +330,8 @@ public class CAManagerImpl extends ManagerBase implements CAManager {
                     final String hostDescription = String.format("host id=%d, uuid=%s, name=%s, ip=%s, zone id=%d",
                             host.getId(), host.getUuid(), host.getName(), hostIp, host.getDataCenterId());
 
-                    DateTime notAfter = new DateTime(certificate.getNotAfter());
+                    Date notAfterDate = certificate.getNotAfter();
+                    DateTime notAfter = new DateTime(notAfterDate);
                     DateTime alertDate = notAfter.minusDays(CertExpiryAlertPeriod.valueIn(host.getClusterId()));
                     DateTime warnDate = alertDate.minusDays(CertExpiryWarningPeriod.valueIn(host.getClusterId()));
 
@@ -338,13 +343,17 @@ public class CAManagerImpl extends ManagerBase implements CAManager {
                                 boolean result = caManager.provisionCertificate(host, false, null);
                                 if (result) {
                                     LOG.debug("Succeeded in auto-renewing certificate for " + hostDescription);
+                                    caManager.sendAlert(host, "Certificate auto-renewal succeeded for " + hostDescription,
+                                            "Certificate auto-renew succeeded for " + hostDescription);
                                 } else {
                                     LOG.debug("Failed in auto-renewing certificate for " + hostDescription);
+                                    caManager.sendAlert(host, "Certificate auto-renewal failed for " + hostDescription,
+                                            String.format("Certificate is going to expire for %s. Auto-renewal failed to renew the certificate, please renew it manually. It is not valid after %s.", hostDescription, notAfterDate));
                                 }
                             } catch (final Throwable ex) {
                                 LOG.warn("Failed to auto-renew certificate for " + hostDescription + ", with error=", ex);
                                 caManager.sendAlert(host, "Certificate auto-renewal failed for " + hostDescription,
-                                        String.format("Certificate is going to expire for %s. Auto-renewal failed to renew the certificate, please renew it manually. It is not valid after %s.", hostDescription, certificate.getNotAfter()));
+                                        String.format("Certificate is going to expire for %s. Error in auto-renewal, failed to renew the certificate, please renew it manually. It is not valid after %s.", hostDescription, notAfterDate));
                             }
                         } else {
                             if (alertMap.containsKey(hostIp)) {
@@ -354,8 +363,8 @@ public class CAManagerImpl extends ManagerBase implements CAManager {
                                 }
                             }
                             caManager.sendAlert(host, "Certificate expiring soon for " + hostDescription,
-                                    String.format("Certificate is going to expire for %s. Please renew it, it is not valid after %s.",
-                                            hostDescription, certificate.getNotAfter()));
+                                    String.format("Certificate is going to expire for %s. Please manually renew it since auto-renew is disabled. It is not valid after %s.",
+                                            hostDescription, notAfterDate));
                             alertMap.put(hostIp, new Date());
                         }
                     } else if (now.isAfter(warnDate)) {
@@ -365,8 +374,13 @@ public class CAManagerImpl extends ManagerBase implements CAManager {
                                 continue;
                             }
                         }
-                        caManager.sendAlert(host, "Certificate expiring soon for " + hostDescription,
-                                String.format("Certificate is going to expire for %s on %s. It will auto renew in %s days before that.", hostDescription, certificate.getNotAfter(), CertExpiryAlertPeriod.valueIn(host.getClusterId())));
+                        if (AutomaticCertRenewal.valueIn(host.getClusterId())) {
+                            caManager.sendAlert(host, "Certificate expiring soon for " + hostDescription,
+                                    String.format("Certificate is going to expire for %s on %s. It will auto renew on %s.", hostDescription, notAfterDate, alertDate));
+                        } else {
+                            caManager.sendAlert(host, "Certificate expiring soon for " + hostDescription,
+                                    String.format("Certificate is going to expire for %s on %s. Auto renewing is not enabled.", hostDescription, notAfterDate));
+                        }
                         alertMap.put(hostIp, new Date());
                     }
                 }
