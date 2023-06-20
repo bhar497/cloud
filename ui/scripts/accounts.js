@@ -18,6 +18,7 @@
 
     var domainObjs;
     var roleObjs;
+
     cloudStack.sections.accounts = {
         title: 'label.accounts',
         id: 'accounts',
