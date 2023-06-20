@@ -17,6 +17,8 @@
 
 (function(cloudStack, $) {
     var rootDomainId;
+
+
     cloudStack.accountsWizard = {
 
         informationWithinLdap: {
