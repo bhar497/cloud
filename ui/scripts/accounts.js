@@ -66,7 +66,7 @@
                         add: {
                             label: 'label.add.account',
                             preFilter: function(args) {
-                                if (isAdmin() || isDomainAdmin())
+                                if (isAdmin())
                                     return true;
                                 else
                                     return false;
@@ -1206,7 +1206,7 @@
                             label: 'label.add.user',
 
                             preFilter: function(args) {
-                                if (isAdmin() || isDomainAdmin())
+                                if (isAdmin())
                                     return true;
                                 else
                                     return false;
@@ -2240,9 +2240,6 @@
 
                 allowedActions.push("changePassword");
                 allowedActions.push("generateKeys");
-                if (g_idpList) {
-                    allowedActions.push("configureSamlAuthorization");
-                }
             } else if (jsonObj.username == g_username) {
                 allowedActions.push("edit");
                 allowedActions.push("changePassword");

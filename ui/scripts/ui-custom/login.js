@@ -166,7 +166,9 @@
 
         // If any IdP servers were set, SAML is enabled
         if (g_idpList && g_idpList.length > 0) {
-            $login.find('#login-dropdown').show();
+            if (localLogin === 'true') {
+                $login.find('#login-dropdown').show();
+            }
             $login.find('#login-submit').hide();
             $login.find('#cloudstack-login').hide();
 
