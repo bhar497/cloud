@@ -172,6 +172,24 @@ public interface AccountManager extends AccountService, Configurable{
     UserAccount updateUser(UpdateUserCmd cmd);
 
     /**
+     * Disables a user by userId
+     *
+     * @param userId
+     *            - the userId
+     * @return UserAccount object
+     */
+    UserAccount disableUser(long userId);
+
+    /**
+     * Enables a user
+     *
+     * @param userId
+     *            - the userId
+     * @return UserAccount object
+     */
+    UserAccount enableUser(long userId);
+
+    /**
      * Locks an account by accountId. A locked account cannot access the API, but will still have running VMs/IP
      * addresses
      * allocated/etc.
