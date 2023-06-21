@@ -1295,7 +1295,8 @@
                                             required: false
                                         },
                                         isHidden: function (args) {
-                                            return !(g_idpList && isAdmin());
+                                            if (g_idpList) return false;
+                                            return true;
                                         }
                                     },
                                     samlEntity: {
@@ -1403,7 +1404,7 @@
                                     data: data,
                                     success: function(json) {
                                         var item = json.createuserresponse.user;
-                                        if ((g_idpList && !isAdmin()) || (args.data.samlEnable && args.data.samlEnable === 'on')) {
+                                        if (args.data.samlEnable && args.data.samlEnable === 'on') {
                                             var entity = args.data.samlEntity;
                                             if (item && entity)
                                                 authorizeUsersForSamlSSO([item], entity);
