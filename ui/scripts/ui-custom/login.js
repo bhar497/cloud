@@ -100,6 +100,8 @@
             args.samlLoginAction({
                 data: {'idpid': g_idpList[0].id}
             })
+        } else {
+            $login.find('div.select-language').show();
         }
 
         $login.find('#login-submit').click(function() {
