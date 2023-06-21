@@ -141,4 +141,22 @@ public interface AccountService {
     UserAccount getUserAccountById(Long userId);
 
     public Map<String, String> getKeys(GetUserKeysCmd cmd);
+
+    /**
+     * Disables a user by userId
+     *
+     * @param userId
+     *            - the userId
+     * @return UserAccount object
+     */
+    UserAccount disableUser(long userId);
+
+    /**
+     * Enables a user
+     *
+     * @param userId
+     *            - the userId
+     * @return UserAccount object
+     */
+    UserAccount enableUser(long userId);
 }
