@@ -2202,7 +2202,6 @@
                 } else if (jsonObj.state == "disabled" || jsonObj.state == "locked") {
                     allowedActions.push("enable");
                 }
-                allowedActions.push("remove");
             }
             allowedActions.push("updateResourceCount");
         }
@@ -2237,13 +2236,10 @@
                     allowedActions.push("disable");
                 if (jsonObj.state == "disabled")
                     allowedActions.push("enable");
-                allowedActions.push("remove");
 
-                allowedActions.push("changePassword");
                 allowedActions.push("generateKeys");
             } else if (jsonObj.username == g_username) {
                 allowedActions.push("edit");
-                allowedActions.push("changePassword");
                 allowedActions.push("generateKeys");
             } 
         }

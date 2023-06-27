@@ -37,7 +37,7 @@ import com.cloud.user.Account;
 
 @APICommand(name = "deleteDomain", description = "Deletes a specified domain", responseObject = SuccessResponse.class,
 requestHasSensitiveInfo = false, responseHasSensitiveInfo = false, authorized = {
-        RoleType.Admin, RoleType.DomainAdmin })
+        RoleType.Admin})
 public class DeleteDomainCmd extends BaseAsyncCmd {
     public static final Logger s_logger = Logger.getLogger(DeleteDomainCmd.class.getName());
     private static final String s_name = "deletedomainresponse";
