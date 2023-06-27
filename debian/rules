@@ -6,7 +6,7 @@ SYSCONFDIR = "/etc"
 DESTDIR = "debian/tmp"
 
 %:
-	dh $@ --with python2,systemd
+	dh $@ --with systemd
 
 override_dh_auto_configure:
 	cp packaging/debian/replace.properties replace.properties.tmp
@@ -118,8 +118,8 @@ override_dh_auto_install:
 	install -D agent/target/dependencies/jasypt-1.9.2.jar $(DESTDIR)/usr/share/$(PACKAGE)-common/lib
 
 	# cloudstack-python
-	mkdir -p $(DESTDIR)/usr/share/pyshared
-	cp -r python/lib/cloud* $(DESTDIR)/usr/share/pyshared
+	mkdir -p $(DESTDIR)/usr/lib/python2.7/dist-packages
+	cp -r python/lib/cloud* $(DESTDIR)/usr/lib/python2.7/dist-packages
 
 	# cloudstack-usage
 	mkdir $(DESTDIR)/$(SYSCONFDIR)/$(PACKAGE)/usage
