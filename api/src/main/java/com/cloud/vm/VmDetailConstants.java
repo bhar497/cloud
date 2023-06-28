@@ -46,6 +46,8 @@ public interface VmDetailConstants {
     String CPU_NUMBER = "cpuNumber";
     String CPU_SPEED = "cpuSpeed";
     String MEMORY = "memory";
+    String ROOT_DISK_STORAGE_POOL = "rootDiskStoragePool";
+    String DATA_DISK_STORAGE_POOL = "dataDiskStoragePool";
 
     // Misc details for internal usage (not to be set/changed by user or admin)
     String CPU_OVER_COMMIT_RATIO = "cpuOvercommitRatio";

@@ -18,6 +18,7 @@ package com.cloud.deploy;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +35,7 @@ import com.cloud.utils.StringUtils;
 import com.cloud.utils.db.Filter;
 import com.cloud.utils.fsm.StateMachine2;
 
+import com.cloud.vm.VmDetailConstants;
 import org.apache.cloudstack.cluster.ClusterDrainingManager;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -283,7 +285,9 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
         String haVmTag = (String)vmProfile.getParameter(VirtualMachineProfile.Param.HaTag);
         String uefiFlag = (String)vmProfile.getParameter(VirtualMachineProfile.Param.UefiFlag);
 
-        _clusterDrainingManager.addDrainingToAvoids(dc, avoids);
+        if (!plan.isMigrationPlan()) {
+            _clusterDrainingManager.addDrainingToAvoids(dc, avoids);
+        }
 
         if (plan.getHostId() != null && haVmTag == null) {
             Long hostIdSpecified = plan.getHostId();
@@ -1076,7 +1080,7 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
         for (Long clusterId : clusterList) {
             ClusterVO clusterVO = _clusterDao.findById(clusterId);
 
-            if (clusterVO.getAllocationState() == Grouping.AllocationState.Disabled && !plan.isMigrationPlan()) {
+            if (clusterVO.getAllocationState() == Grouping.AllocationState.Disabled && !plan.isMigrationPlan() && !_clusterDrainingManager.isClusterDraining(clusterVO)) {
                 s_logger.debug("Cannot deploy in disabled cluster " + clusterId + ", skipping this cluster");
                 avoid.addCluster(clusterVO.getId());
             }
@@ -1501,14 +1505,29 @@ StateListener<State, VirtualMachine.Event, VirtualMachine> {
             }
             diskProfile.setUseLocalStorage(useLocalStorage);
 
+            Map<String, String> details = vmProfile.getVirtualMachine().getDetails();
+            String storagePoolUuid = null;
+            String storagePoolDetailKey = toBeCreated.getVolumeType() == Volume.Type.ROOT ? VmDetailConstants.ROOT_DISK_STORAGE_POOL : VmDetailConstants.DATA_DISK_STORAGE_POOL;
+            if (details != null && details.containsKey(storagePoolDetailKey)) {
+                storagePoolUuid = details.get(storagePoolDetailKey);
+            }
             boolean foundPotentialPools = false;
-            for (StoragePoolAllocator allocator : _storagePoolAllocators) {
-                final List<StoragePool> suitablePools = allocator.allocateToPool(diskProfile, vmProfile, plan, avoid, returnUpTo);
-                if (suitablePools != null && !suitablePools.isEmpty()) {
-                    suitableVolumeStoragePools.put(toBeCreated, suitablePools);
-                    foundPotentialPools = true;
-                    break;
+            if (storagePoolUuid == null) {
+                for (StoragePoolAllocator allocator : _storagePoolAllocators) {
+                    final List<StoragePool> suitablePools = allocator.allocateToPool(diskProfile, vmProfile, plan, avoid, returnUpTo);
+                    if (suitablePools != null && !suitablePools.isEmpty()) {
+                        suitableVolumeStoragePools.put(toBeCreated, suitablePools);
+                        foundPotentialPools = true;
+                        break;
+                    }
                 }
+            } else {
+                StoragePool pool = _storagePoolDao.findPoolByUUID(storagePoolUuid);
+                if (pool == null) {
+                    throw new CloudRuntimeException("Storage pool in details not found");
+                }
+                suitableVolumeStoragePools.put(toBeCreated, Collections.singletonList(pool));
+                foundPotentialPools = true;
             }
 
             if (avoid.getPoolsToAvoid() != null) {

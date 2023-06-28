@@ -307,6 +307,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
     @Inject
     private GuestOSDao _guestOSDao;
     @Inject
+    protected UserVmDetailsDao _vmDetailsDao;
+    @Inject
     private ServiceOfferingDao _serviceOfferingDao;
     @Inject
     private CAManager caManager;
@@ -961,6 +963,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         final User caller = cctxt.getCallingUser();
 
         VMInstanceVO vm = _vmDao.findByUuid(vmUuid);
+        Map<String, String> details = _vmDetailsDao.listDetailsKeyPairs(vm.getId());
+        vm.setDetails(details);
 
         final VirtualMachineGuru vmGuru = getVmGuru(vm);
 

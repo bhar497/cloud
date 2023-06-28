@@ -789,10 +789,6 @@
                                         }
                                     }
 
-                                    if (networkObj.vpcid) {
-                                        networkObj._singleSelect = true;
-                                    }
-
                                     //for Advanced SG-enabled zone, list only SG network offerings
                                     if (selectedZoneObj.networktype == 'Advanced' && selectedZoneObj.securitygroupsenabled == true) {
                                         if (includingSecurityGroup == false)
