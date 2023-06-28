@@ -1846,7 +1846,6 @@
                                 }],
 
                                 dataProvider: function(args) {
-                                if (isAdmin() || isDomainAdmin()) {
                                     $.ajax({
                                         url: createURL('listUsers'),
                                             data: {
@@ -1871,13 +1870,7 @@
                                                     });
                                                 }
                                             });
-                                        }
-                                    else { //normal user doesn't have access listUsers API until Bug 14127 is fixed.
-                                        args.response.success({
-                                            actionFilter: userActionfilter,
-                                            data: args.context.users[0]
-                                        });
-                                    }
+
                                 }
                             }
                         }
@@ -2196,12 +2189,6 @@
         } else if (isDomainAdmin()) {
             if (jsonObj.name != g_account) {
                 allowedActions.push("edit"); //updating networkdomain is allowed on any account, including system-generated default admin account
-                if (jsonObj.state == "enabled") {
-                    allowedActions.push("disable");
-                    allowedActions.push("lock");
-                } else if (jsonObj.state == "disabled" || jsonObj.state == "locked") {
-                    allowedActions.push("enable");
-                }
             }
             allowedActions.push("updateResourceCount");
         }
@@ -2232,10 +2219,6 @@
         } else { //domain-admin, regular-user
             if (isDomainAdmin()) {
                 allowedActions.push("edit");
-                if (jsonObj.state == "enabled")
-                    allowedActions.push("disable");
-                if (jsonObj.state == "disabled")
-                    allowedActions.push("enable");
 
                 allowedActions.push("generateKeys");
             } else if (jsonObj.username == g_username) {
