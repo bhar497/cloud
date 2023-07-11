@@ -96,12 +96,13 @@
         // Login action
         var selectedLogin = 'cloudstack';
         var localLogin = $.urlParam('local_login');
-        var loginMessage = $.cookie('login-message');
-        if (localLogin !== 'true' && !loginMessage) {
+        var loggedOut = $.cookie('local-logged-out');
+        $.cookie('local-logged-out', null);
+        if (localLogin !== 'true' && loggedOut !== 'true') {
             args.samlLoginAction({
                 data: {'idpid': g_idpList[0].id}
             })
-        } else if (!loginMessage) {
+        } else if (loggedOut !== 'true') {
             $login.find('div.select-language').show();
         }
 
