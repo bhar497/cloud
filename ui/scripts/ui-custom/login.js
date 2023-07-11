@@ -96,13 +96,13 @@
         // Login action
         var selectedLogin = 'cloudstack';
         var localLogin = $.urlParam('local_login');
-        var loggedOut = $.cookie('local-logged-out');
+        var loggedOut = $.cookie('local-logged-out') === true;
         $.cookie('local-logged-out', null);
-        if (localLogin !== 'true' && loggedOut !== 'true') {
+        if (localLogin !== 'true' && !loggedOut) {
             args.samlLoginAction({
                 data: {'idpid': g_idpList[0].id}
             })
-        } else if (loggedOut !== 'true') {
+        } else if (!loggedOut) {
             $login.find('div.select-language').show();
         }
 
@@ -192,7 +192,7 @@
             });
 
             var loginOption = $.cookie('login-option');
-            if (loginOption) {
+            if (loginOption && !loggedOut) {
                 var option = $login.find('#login-options option[value="' + loginOption + '"]');
                 if (option.length > 0) {
                     option.prop('selected', true);
