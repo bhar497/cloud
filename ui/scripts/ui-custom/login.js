@@ -96,7 +96,7 @@
         // Login action
         var selectedLogin = 'cloudstack';
         var localLogin = $.urlParam('local_login');
-        var loggedOut = $.cookie('local-logged-out') === true;
+        var loggedOut = $.cookie('local-logged-out') === 'true';
         $.cookie('local-logged-out', null);
         if (localLogin !== 'true' && !loggedOut) {
             args.samlLoginAction({
