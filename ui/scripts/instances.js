@@ -113,6 +113,11 @@
                         isBoolean: true,
                         isChecked: false
                     },
+                    volumes: {
+                        label: 'label.delete.volumes',
+                        isBoolean: true,
+                        isChecked: false
+                    },
                     volumeids: {
                         label: 'label.volume.ids',
                         dependsOn: 'volumes',
