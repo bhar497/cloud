@@ -523,7 +523,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     private static final ConfigKey<Boolean> VmDestroyForcestop = new ConfigKey<Boolean>("Advanced", Boolean.class, "vm.destroy.forcestop", "false",
             "On destroy, force-stop takes this value ", true);
 
-
     @Override
     public UserVmVO getVirtualMachine(long vmId) {
         return _vmDao.findById(vmId);
@@ -2788,7 +2787,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             s_logger.debug("Vm id=" + vmId + " is already destroyed");
             return vm;
         }
-
         // check if there are active volume snapshots tasks
         s_logger.debug("Checking if there are any ongoing snapshots on the ROOT volumes associated with VM with ID " + vmId);
         if (checkStatusOfVolumeSnapshots(vmId, Volume.Type.ROOT)) {
@@ -6490,7 +6488,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         }
         return false;
     }
-
     private void checkForUnattachedVolumes(long vmId, List<VolumeVO> volumes) {
 
         StringBuilder sb = new StringBuilder();
