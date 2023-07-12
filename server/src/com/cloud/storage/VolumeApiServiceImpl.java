@@ -1945,7 +1945,6 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
     public Volume detachVolumeViaDestroyVM(long vmId, long volumeId) {
         return orchestrateDetachVolumeFromVM(vmId, volumeId);
     }
-
     private Volume orchestrateDetachVolumeFromVM(long vmId, long volumeId) {
 
         Volume volume = _volsDao.findById(volumeId);
