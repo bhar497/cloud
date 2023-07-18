@@ -95,6 +95,17 @@
 
         // Login action
         var selectedLogin = 'cloudstack';
+        var localLogin = $.urlParam('local_login');
+        var loggedOut = $.cookie('local-logged-out') === 'true';
+        $.cookie('local-logged-out', null);
+        if (localLogin !== 'true' && !loggedOut) {
+            args.samlLoginAction({
+                data: {'idpid': g_idpList[0].id}
+            })
+        } else if (!loggedOut) {
+            $login.find('div.select-language').show();
+        }
+
         $login.find('#login-submit').click(function() {
             var selectedOption = $login.find('#login-options').find(':selected').val();
             if ((selectedLogin === 'cloudstack' || selectedLogin === 'saml') && selectedOption && selectedOption !== '') {
@@ -159,7 +170,9 @@
 
         // If any IdP servers were set, SAML is enabled
         if (g_idpList && g_idpList.length > 0) {
-            $login.find('#login-dropdown').show();
+            if (localLogin === 'true') {
+                $login.find('#login-dropdown').show();
+            }
             $login.find('#login-submit').hide();
             $login.find('#cloudstack-login').hide();
 
@@ -179,7 +192,7 @@
             });
 
             var loginOption = $.cookie('login-option');
-            if (loginOption) {
+            if (loginOption && !loggedOut) {
                 var option = $login.find('#login-options option[value="' + loginOption + '"]');
                 if (option.length > 0) {
                     option.prop('selected', true);

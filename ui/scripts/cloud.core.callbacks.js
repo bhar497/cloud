@@ -36,6 +36,8 @@ or it's the first time the user has come to this page.
 function onLogoutCallback() {
     g_loginResponse = null; //clear single signon variable g_loginResponse
 
+    $.cookie('local-logged-out', 'true');
+
     if ($.cookie('login-option') !== 'cloudstack-login') {
         $.cookie('login-message', 'You have been logged out.  Please close all open browser windows to fully sign-out.');
     }

@@ -32,7 +32,7 @@ import com.cloud.user.Account;
 
 @APICommand(name = "createDomain", description = "Creates a domain", responseObject = DomainResponse.class,
  requestHasSensitiveInfo = false, responseHasSensitiveInfo = false, authorized = {
-        RoleType.Admin, RoleType.DomainAdmin })
+        RoleType.Admin})
 public class CreateDomainCmd extends BaseCmd {
     public static final Logger s_logger = Logger.getLogger(CreateDomainCmd.class.getName());
 
