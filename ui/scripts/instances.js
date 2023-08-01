@@ -127,7 +127,7 @@
                         multiDataArray: true,
                         multiData: function(args) {
                             $.ajax({
-                                url: createURL("listVolumes&virtualMachineId=" + args.context.instances[0].id) + "&type=DATADISK",
+                                url: createURL("listVolumes&virtualMachineId=" + args.context.instances[0].id + "&listAll=true") + "&type=DATADISK",
                                   dataType: "json",
                                   async: true,
                                   success: function(json) {
