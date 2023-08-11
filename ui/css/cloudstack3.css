@@ -5778,7 +5778,7 @@ label.error {
 
 .multi-wizard.instance-wizard .service-offering .content {
   width: 463px;
-  max-height: 365px;
+  max-height: 415px;
   overflow: auto;
   overflow-x: hidden;
 }
@@ -5862,11 +5862,11 @@ label.error {
 }
 
 .multi-wizard .content .section.select-zone {
-  height: 117px;
+  /*height: 117px;*/
 }
 
 .multi-wizard .content .section.select-template {
-  height: 206px;
+  /*height: 206px;*/
 }
 
 .multi-wizard .content.tab-view {
@@ -5992,7 +5992,7 @@ label.error {
 
 /*** Select container*/
 .multi-wizard .select-container {
-  height: 352px;
+  height: 402px;
   overflow: auto;
   overflow-x: hidden;
   border: 1px solid #D9DFE1;
@@ -6174,7 +6174,7 @@ label.error {
 /** Instance wizard
 ** Select ISO*/
 .multi-wizard.instance-wizard .select-iso .select-container {
-  height: 260px;
+  height: 310px;
   margin: 0;
   /*+border-radius:0 0 5px 5px;*/
   -moz-border-radius: 0 0 5px 5px;
@@ -6190,7 +6190,7 @@ label.error {
 }
 
 .multi-wizard.instance-wizard .data-disk-offering .select-container {
-  height: 300px;
+  height: 390px;
   margin: -7px 6px 0 8px;
   /*+border-radius:6px;*/
   -moz-border-radius: 6px;
@@ -6299,7 +6299,7 @@ label.error {
 }
 
 .multi-wizard.instance-wizard .custom-disk-size .select-container {
-  height: 213px;
+  height: 263px;
   margin: -7px 6px 0 8px;
   /*+border-radius:6px;*/
   -moz-border-radius: 6px;
@@ -6537,7 +6537,7 @@ label.error {
 .multi-wizard.instance-wizard .select-network .select table .select-container {
   margin: 0px;
   border: 0;
-  height: 223px;
+  height: 273px;
 }
 
 .multi-wizard.instance-wizard .select-network.no-add-network .select table .select-container {
