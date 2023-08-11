@@ -190,7 +190,11 @@ known_categories = {
     'CA': 'Certificate',
     'listElastistorInterface': 'Misc',
     'cloudian': 'Cloudian',
-    'Sioc' : 'Sioc'
+    'Sioc' : 'Sioc',
+    'addIpReservation' : 'Network',
+    'listIpReservation' : 'Network',
+    'removeIpReservation' : 'Network',
+    'generateIpReservation': 'Network'
     }
 
 

@@ -34,6 +34,8 @@ import java.util.TreeSet;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.network.dao.IpReservationDao;
+import org.apache.cloudstack.network.IpReservation;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 
@@ -205,6 +207,8 @@ public class NetworkModelImpl extends ManagerBase implements NetworkModel, Confi
     NetworkOfferingDetailsDao _ntwkOffDetailsDao;
     @Inject
     private NetworkService _networkService;
+    @Inject
+    IpReservationDao ipReservationDao;
 
     private final HashMap<String, NetworkOfferingVO> _systemNetworks = new HashMap<String, NetworkOfferingVO>(5);
     static Long s_privateOfferingId = null;
@@ -1872,6 +1876,11 @@ public class NetworkModelImpl extends ManagerBase implements NetworkModel, Confi
         //Get ips used by load balancers
         List<String> lbIps = _appLbRuleDao.listLbIpsBySourceIpNetworkId(network.getId());
         ips.addAll(lbIps);
+        // Get all reserved IPs
+        List<IpReservationVO> reservations = ipReservationDao.getIpReservationsForNetwork(network.getId());
+        for (IpReservation reservation : reservations) {
+            ips.addAll(reservation.getIpList());
+        }
         return ips;
     }
 
