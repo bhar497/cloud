@@ -29,6 +29,10 @@ setup_vpcrouter() {
 auto lo eth0
 iface lo inet loopback
 EOF
+  if [ ! -f /etc/udev/rules.d/gro-off.rules ]; then
+    cp /etc/gro-off.rules /etc/udev/rules.d/gro-off.rules
+    udevadm control --reload-rules && udevadm trigger
+  fi
   setup_interface "0" $ETH0_IP $ETH0_MASK $GW
 
   echo $NAME > /etc/hostname
@@ -88,8 +92,6 @@ EOF
   cp /etc/iptables/iptables-vpcrouter /etc/iptables/rules.v4
   setup_sshd $ETH0_IP "eth0"
   cp /etc/vpcdnsmasq.conf /etc/dnsmasq.conf
-  cp /etc/gro-off.rules /etc/udev/rules.d/gro-off.rules
-  udevadm control --reload-rules && udevadm trigger
   cp /etc/cloud-nic.rules /etc/udev/rules.d/cloud-nic.rules
   echo "" > /etc/dnsmasq.d/dhcphosts.txt
   echo "dhcp-hostsfile=/etc/dhcphosts.txt" > /etc/dnsmasq.d/cloud.conf
