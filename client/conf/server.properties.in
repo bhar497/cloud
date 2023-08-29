@@ -42,4 +42,4 @@ https.keystore.password=vmops.com
 webapp.dir=/usr/share/cloudstack-management/webapp
 
 # The path to access log file
-access.log=/var/log/cloudstack/management/access.log
+access.log=/var/log/cloudstack/management/access.yyyy_mm_dd.log
