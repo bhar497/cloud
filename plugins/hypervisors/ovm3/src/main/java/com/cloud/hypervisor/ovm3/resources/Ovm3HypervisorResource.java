@@ -166,7 +166,7 @@ public class Ovm3HypervisorResource extends ServerResourceBase implements Hyperv
                 } else {
                     LOGGER.debug("Storage health check running on " + configuration.getAgentHostname());
                 }
-                return new PingRoutingCommand(getType(), id, hypervisorsupport.hostVmStateReport());
+                return new PingRoutingCommand(getType(), id, hypervisorsupport.hostVmStateReport(), null);
             } else {
                 LOGGER.debug("Agent did not respond correctly: " + ping + " but got " + pong);
             }

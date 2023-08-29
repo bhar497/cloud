@@ -2046,13 +2046,13 @@ public abstract class CitrixResourceBase implements ServerResource, HypervisorRe
             }
             final Connection conn = getConnection();
             if (!_canBridgeFirewall && !_isOvs) {
-                return new PingRoutingCommand(getType(), id, getHostVmStateReport(conn));
+                return new PingRoutingCommand(getType(), id, getHostVmStateReport(conn), null);
             } else if (_isOvs) {
                 final List<Pair<String, Long>> ovsStates = ovsFullSyncStates();
                 return new PingRoutingWithOvsCommand(getType(), id, getHostVmStateReport(conn), ovsStates);
             } else {
                 final HashMap<String, Pair<Long, Long>> nwGrpStates = syncNetworkGroups(conn, id);
-                return new PingRoutingWithNwGroupsCommand(getType(), id, getHostVmStateReport(conn), nwGrpStates);
+                return new PingRoutingWithNwGroupsCommand(getType(), id, getHostVmStateReport(conn), nwGrpStates, null);
             }
         } catch (final Exception e) {
             s_logger.warn("Unable to get current status", e);

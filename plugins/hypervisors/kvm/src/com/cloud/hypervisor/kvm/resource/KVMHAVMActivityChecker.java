@@ -19,18 +19,17 @@ package com.cloud.hypervisor.kvm.resource;
 import com.cloud.utils.script.OutputInterpreter;
 import com.cloud.utils.script.Script;
 import org.apache.log4j.Logger;
-import org.joda.time.Duration;
 
 import java.util.concurrent.Callable;
 
 public class KVMHAVMActivityChecker extends KVMHABase implements Callable<Boolean> {
     private static final Logger LOG = Logger.getLogger(KVMHAVMActivityChecker.class);
+    final private static long activityScriptTimeout = 10 * 1000;
 
     final private NfsStoragePool nfsStoragePool;
     final private String hostIP;
     final private String volumeUuidList;
     final private String vmActivityCheckPath;
-    final private Duration activityScriptTimeout = Duration.standardSeconds(3600L);
     final private long suspectTimeInSeconds;
 
     public KVMHAVMActivityChecker(final NfsStoragePool pool, final String host, final String volumeUUIDListString, String vmActivityCheckPath, final long suspectTime) {
@@ -43,7 +42,7 @@ public class KVMHAVMActivityChecker extends KVMHABase implements Callable<Boolea
 
     @Override
     public Boolean checkingHB() {
-        Script cmd = new Script(vmActivityCheckPath, activityScriptTimeout.getStandardSeconds(), LOG);
+        Script cmd = new Script(vmActivityCheckPath, activityScriptTimeout, LOG);
         cmd.add("-i", nfsStoragePool._poolIp);
         cmd.add("-p", nfsStoragePool._poolMountSourcePath);
         cmd.add("-m", nfsStoragePool._mountDestPath);

@@ -147,24 +147,29 @@ public class KVMHostActivityChecker extends AdapterBase implements ActivityCheck
         if (agent.getHypervisorType() != Hypervisor.HypervisorType.KVM && agent.getHypervisorType() != Hypervisor.HypervisorType.LXC) {
             throw new IllegalStateException("Calling KVM investigator for non KVM Host of type " + agent.getHypervisorType());
         }
-        boolean activityStatus = true;
         HashMap<StoragePool, List<Volume>> poolVolMap = getVolumeUuidOnHost(agent);
         for (StoragePool pool : poolVolMap.keySet()) {
             //for each storage pool find activity
             List<Volume> volume_list = poolVolMap.get(pool);
+            if (volume_list.size() == 0) {
+                // If no volumes, just skip this pool
+                continue;
+            }
             final CheckVMActivityOnStoragePoolCommand cmd = new CheckVMActivityOnStoragePoolCommand(agent, pool, volume_list, suspectTime);
             //send the command to appropriate storage pool
             Answer answer = storageManager.sendToPool(pool, getNeighbors(agent), cmd);
             if (answer != null) {
-                activityStatus = ! answer.getResult();
+                if (!answer.getResult()) {
+                    LOG.debug("Resource active = true");
+                    return true;
+                }
             } else {
                 throw new IllegalStateException("Did not get a valid response for VM activity check for host " + agent.getId());
             }
         }
-        if (LOG.isDebugEnabled()){
-            LOG.debug("Resource active = " + activityStatus);
-        }
-        return activityStatus;
+
+        LOG.debug("Resource active = false");
+        return false;
     }
 
     private HashMap<StoragePool, List<Volume>> getVolumeUuidOnHost(Host agent) {

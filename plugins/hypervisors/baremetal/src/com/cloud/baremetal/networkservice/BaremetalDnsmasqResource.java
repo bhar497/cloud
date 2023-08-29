@@ -98,7 +98,7 @@ public class BaremetalDnsmasqResource extends BaremetalDhcpResourceBase {
             return null;
         } else {
             SSHCmdHelper.releaseSshConnection(sshConnection);
-            return new PingRoutingCommand(getType(), id, new HashMap<String, HostVmStateReportEntry>());
+            return new PingRoutingCommand(getType(), id, new HashMap<String, HostVmStateReportEntry>(), null);
         }
     }
 

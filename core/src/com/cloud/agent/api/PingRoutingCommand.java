@@ -30,12 +30,19 @@ public class PingRoutingCommand extends PingCommand {
     boolean _gatewayAccessible = true;
     boolean _vnetAccessible = true;
 
+    boolean shouldAlert = false;
+    String alertDetails = null;
+
     protected PingRoutingCommand() {
     }
 
-    public PingRoutingCommand(Host.Type type, long id, Map<String, HostVmStateReportEntry> hostVmStateReport) {
+    public PingRoutingCommand(Host.Type type, long id, Map<String, HostVmStateReportEntry> hostVmStateReport, String alertDetails) {
         super(type, id);
         this._hostVmStateReport = hostVmStateReport;
+        if (alertDetails != null) {
+            this.shouldAlert = true;
+            this.alertDetails = alertDetails;
+        }
     }
 
     public Map<String, HostVmStateReportEntry> getHostVmStateReport() {
@@ -56,5 +63,13 @@ public class PingRoutingCommand extends PingCommand {
 
     public void setVnetAccessible(boolean vnetAccessible) {
         _vnetAccessible = vnetAccessible;
+    }
+
+    public boolean shouldAlert() {
+        return this.shouldAlert;
+    }
+
+    public String getAlertDetails() {
+        return this.alertDetails;
     }
 }

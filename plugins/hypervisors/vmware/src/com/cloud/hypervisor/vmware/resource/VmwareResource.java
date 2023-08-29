@@ -5063,7 +5063,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                 s_logger.error("Unexpected exception", e);
                 return null;
             }
-            return new PingRoutingCommand(getType(), id, syncHostVmStates());
+            return new PingRoutingCommand(getType(), id, syncHostVmStates(), null);
         } finally {
             recycleServiceContext();
         }

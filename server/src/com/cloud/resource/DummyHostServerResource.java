@@ -56,7 +56,7 @@ public class DummyHostServerResource extends ServerResourceBase {
 
     @Override
     public PingCommand getCurrentStatus(long id) {
-        return new PingRoutingCommand(com.cloud.host.Host.Type.Routing, id, new HashMap<String, HostVmStateReportEntry>());
+        return new PingRoutingCommand(com.cloud.host.Host.Type.Routing, id, new HashMap<String, HostVmStateReportEntry>(), null);
     }
 
     @Override
