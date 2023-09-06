@@ -136,13 +136,15 @@ public final class LibvirtDeleteVMSnapshotCommandWrapper extends CommandWrapper<
             if (ImageFormat.QCOW2.equals(volume.getFormat())) {
                 PrimaryDataStoreTO primaryStore = (PrimaryDataStoreTO) volume.getDataStore();
                 KVMPhysicalDisk disk = storagePoolMgr.getPhysicalDisk(primaryStore.getPoolType(), primaryStore.getUuid(), volume.getPath());
-                String qemu_img_snapshot = Script.runSimpleBashScript("qemu-img snapshot -l " + disk.getPath() + " | tail -n +3 | awk -F ' ' '{print $2}' | grep ^" + cmd.getTarget().getSnapshotName() + "$");
+                int timeout = cmd.getWait();
+                String qemu_img_snapshot = Script.runSimpleBashScript("qemu-img snapshot -l " + disk.getPath() + " | tail -n +3 | awk -F ' ' '{print $2}' | grep ^" + cmd.getTarget().getSnapshotName() + "$", timeout);
                 if (qemu_img_snapshot == null) {
                     s_logger.info("Cannot find snapshot " + cmd.getTarget().getSnapshotName() + " in file " + disk.getPath());
-                }
-                int result = Script.runSimpleBashScriptForExitValue("qemu-img snapshot -d " + cmd.getTarget().getSnapshotName() + " " + disk.getPath());
-                if (result != 0) {
-                    ret.add("Delete VM Snapshot Failed due to can not remove snapshot from image file " + disk.getPath()  + " : " + result);
+                } else {
+                    int result = Script.runSimpleBashScriptForExitValue("qemu-img snapshot -d " + cmd.getTarget().getSnapshotName() + " " + disk.getPath(), timeout);
+                    if (result != 0) {
+                        ret.add("Delete VM Snapshot Failed due to can not remove snapshot from image file " + disk.getPath()  + " : " + result);
+                    }
                 }
             }
         }
