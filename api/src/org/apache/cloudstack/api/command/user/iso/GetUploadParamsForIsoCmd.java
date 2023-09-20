@@ -32,12 +32,14 @@ import org.apache.cloudstack.api.response.GetUploadParamsResponse;
 import org.apache.cloudstack.api.response.GuestOSResponse;
 import org.apache.cloudstack.api.response.ZoneResponse;
 import org.apache.cloudstack.context.CallContext;
+import org.apache.cloudstack.acl.RoleType;
 
 import java.net.MalformedURLException;
 
 @APICommand(name = GetUploadParamsForIsoCmd.APINAME,
         description = "upload an existing ISO into the CloudStack cloud.",
         responseObject = GetUploadParamsResponse.class, since = "4.13",
+        authorized = {RoleType.Admin, RoleType.ResourceAdmin, RoleType.DomainAdmin, RoleType.User},
         requestHasSensitiveInfo = false, responseHasSensitiveInfo = false)
 public class GetUploadParamsForIsoCmd extends AbstractGetUploadParamsCmd {
 
