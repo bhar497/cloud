@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.cloudstack.framework.events.EventDistributor;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.stereotype.Component;
@@ -42,10 +43,14 @@ import com.cloud.server.ManagementService;
 import com.cloud.utils.component.ComponentContext;
 import com.cloud.utils.component.ComponentMethodInterceptor;
 
+import javax.inject.Inject;
+
 @Component
 public class EventUtils {
     private static final Logger s_logger = Logger.getLogger(EventUtils.class);
 
+    @Inject
+    private EventDistributor eventDistributor;
     protected static  EventBus s_eventBus = null;
 
     public EventUtils() {

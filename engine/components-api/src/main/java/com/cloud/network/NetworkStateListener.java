@@ -25,15 +25,11 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
-import org.apache.cloudstack.framework.events.EventBus;
-import org.apache.cloudstack.framework.events.EventBusException;
-import org.apache.log4j.Logger;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.apache.cloudstack.framework.events.EventDistributor;
 
 import com.cloud.event.EventCategory;
 import com.cloud.network.Network.Event;
 import com.cloud.network.Network.State;
-import com.cloud.utils.component.ComponentContext;
 import com.cloud.utils.fsm.StateListener;
 import com.cloud.utils.fsm.StateMachine2;
 
@@ -41,10 +37,8 @@ public class NetworkStateListener implements StateListener<State, Event, Network
 
     @Inject
     private ConfigurationDao _configDao;
-
-    private static EventBus s_eventBus = null;
-
-    private static final Logger s_logger = Logger.getLogger(NetworkStateListener.class);
+    @Inject
+    private EventDistributor eventDistributor;
 
     public NetworkStateListener(ConfigurationDao configDao) {
         _configDao = configDao;
@@ -72,11 +66,6 @@ public class NetworkStateListener implements StateListener<State, Event, Network
         boolean configValue = Boolean.parseBoolean(value);
         if(!configValue)
             return;
-        try {
-            s_eventBus = ComponentContext.getComponent(EventBus.class);
-        } catch (NoSuchBeanDefinitionException nbe) {
-            return; // no provider is configured to provide events bus, so just return
-        }
 
         String resourceName = getEntityFromClassName(Network.class.getName());
         org.apache.cloudstack.framework.events.Event eventMsg =
@@ -91,11 +80,8 @@ public class NetworkStateListener implements StateListener<State, Event, Network
         eventDescription.put("eventDateTime", eventDate);
 
         eventMsg.setDescription(eventDescription);
-        try {
-            s_eventBus.publish(eventMsg);
-        } catch (EventBusException e) {
-            s_logger.warn("Failed to publish state change event on the event bus.");
-        }
+
+        eventDistributor.publish(eventMsg);
     }
 
     private String getEntityFromClassName(String entityClassName) {

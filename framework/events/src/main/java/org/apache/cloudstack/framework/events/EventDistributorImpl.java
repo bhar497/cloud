@@ -45,6 +45,7 @@ public class EventDistributorImpl extends ManagerBase implements EventDistributo
 
     @Override
     public List<EventBusException> publish(Event event) {
+        LOGGER.info(String.format("publishing %s to %d event busses", (event == null ? "<none>" : event.getDescription()), eventBusses.size()));
         List<EventBusException> exceptions = new ArrayList<>();
         for (EventBus bus : eventBusses) {
             try {

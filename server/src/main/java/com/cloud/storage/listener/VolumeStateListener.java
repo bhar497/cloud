@@ -22,33 +22,34 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.cloud.event.EventTypes;
-import com.cloud.event.UsageEventUtils;
-import com.cloud.utils.fsm.StateMachine2;
-import com.cloud.vm.VMInstanceVO;
-import com.cloud.vm.VirtualMachine;
-import com.cloud.vm.dao.VMInstanceDao;
-import org.apache.log4j.Logger;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-
-import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
-import org.apache.cloudstack.framework.events.EventBus;
-import org.apache.cloudstack.framework.events.EventBusException;
+import javax.inject.Inject;
 
 import com.cloud.configuration.Config;
 import com.cloud.event.EventCategory;
+import com.cloud.event.EventTypes;
+import com.cloud.event.UsageEventUtils;
 import com.cloud.server.ManagementService;
 import com.cloud.storage.Volume;
 import com.cloud.storage.Volume.Event;
 import com.cloud.storage.Volume.State;
-import com.cloud.utils.component.ComponentContext;
 import com.cloud.utils.fsm.StateListener;
+import com.cloud.utils.fsm.StateMachine2;
+import com.cloud.vm.VMInstanceVO;
+import com.cloud.vm.VirtualMachine;
+import com.cloud.vm.dao.VMInstanceDao;
+
+import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
+import org.apache.cloudstack.framework.events.EventDistributor;
+
+import org.apache.log4j.Logger;
 
 public class VolumeStateListener implements StateListener<State, Event, Volume> {
 
-    protected static EventBus s_eventBus = null;
     protected ConfigurationDao _configDao;
     protected VMInstanceDao _vmInstanceDao;
+
+    @Inject
+    private EventDistributor eventDistributor;
 
     private static final Logger s_logger = Logger.getLogger(VolumeStateListener.class);
 
@@ -99,11 +100,6 @@ public class VolumeStateListener implements StateListener<State, Event, Volume> 
         boolean configValue = Boolean.parseBoolean(value);
         if(!configValue)
             return;
-        try {
-            s_eventBus = ComponentContext.getComponent(EventBus.class);
-        } catch (NoSuchBeanDefinitionException nbe) {
-            return; // no provider is configured to provide events bus, so just return
-        }
 
         String resourceName = getEntityFromClassName(Volume.class.getName());
         org.apache.cloudstack.framework.events.Event eventMsg =
@@ -119,11 +115,7 @@ public class VolumeStateListener implements StateListener<State, Event, Volume> 
         eventDescription.put("eventDateTime", eventDate);
 
         eventMsg.setDescription(eventDescription);
-        try {
-            s_eventBus.publish(eventMsg);
-        } catch (EventBusException e) {
-            s_logger.warn("Failed to state change event on the event bus.");
-        }
+        eventDistributor.publish(eventMsg);
     }
 
     private String getEntityFromClassName(String entityClassName) {
