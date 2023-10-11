@@ -19,6 +19,7 @@ package org.apache.cloudstack.api.command;
 import com.cloud.domain.Domain;
 import com.cloud.user.Account;
 import com.cloud.user.UserAccount;
+import org.apache.cloudstack.acl.RoleType;
 import org.apache.cloudstack.acl.SecurityChecker;
 import org.apache.cloudstack.api.APICommand;
 import org.apache.cloudstack.api.ApiConstants;
@@ -35,7 +36,8 @@ import org.apache.log4j.Logger;
 
 import javax.inject.Inject;
 
-@APICommand(name = "authorizeSamlSso", description = "Allow or disallow a user to use SAML SSO", responseObject = SuccessResponse.class, requestHasSensitiveInfo = false, responseHasSensitiveInfo = false)
+@APICommand(name = "authorizeSamlSso", description = "Allow or disallow a user to use SAML SSO", responseObject = SuccessResponse.class,
+        requestHasSensitiveInfo = false, responseHasSensitiveInfo = false, authorized = { RoleType.Admin })
 public class AuthorizeSAMLSSOCmd extends BaseCmd {
     public static final Logger s_logger = Logger.getLogger(AuthorizeSAMLSSOCmd.class.getName());
 
