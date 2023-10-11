@@ -46,7 +46,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.cloud.utils.HttpUtils;
 import org.mockito.stubbing.Answer;
-import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.impl.EntityDescriptorBuilder;
 
 @RunWith(MockitoJUnitRunner.class)
