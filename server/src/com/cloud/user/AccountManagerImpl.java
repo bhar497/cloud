@@ -2248,6 +2248,52 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
         }
     }
 
+    @Override
+    public UserAccount impersonateUser(final String username, final Long domainId, final InetAddress loginIpAddress, final Map<String, Object[]>
+            requestParameters) {
+        UserAccount user = _userAccountDao.getUserAccount(username, domainId);
+        if (user != null) {
+            // don't allow to authenticate system user
+            if (user.getId() == User.UID_SYSTEM) {
+                s_logger.error("Failed to authenticate user: " + username + " in domain " + domainId);
+                return null;
+            }
+            // don't allow baremetal system user
+            if (BaremetalUtils.BAREMETAL_SYSTEM_ACCOUNT_NAME.equals(user.getUsername())) {
+                s_logger.error("Won't authenticate user: " + username + " in domain " + domainId);
+                return null;
+            }
+            // We authenticated successfully by now, let's check if we are allowed to login from the ip address the reqest comes from
+            final Account account = _accountMgr.getAccount(user.getAccountId());
+            final DomainVO domain = (DomainVO) _domainMgr.getDomain(account.getDomainId());
+            // Get the CIDRs from where this account is allowed to make calls
+            final String accessAllowedCidrs = ApiServiceConfiguration.ApiAllowedSourceCidrList.valueIn(account.getId()).replaceAll("\\s","");
+            final Boolean ApiSourceCidrChecksEnabled = ApiServiceConfiguration.ApiSourceCidrChecksEnabled.value();
+            if (ApiSourceCidrChecksEnabled) {
+                s_logger.debug("CIDRs from which account '" + account.toString() + "' is allowed to perform API calls: " + accessAllowedCidrs);
+                // Block when is not in the list of allowed IPs
+                if (!NetUtils.isIpInCidrList(loginIpAddress, accessAllowedCidrs.split(","))) {
+                    s_logger.warn("Request by account '" + account.toString() + "' was denied since " + loginIpAddress.toString().replaceAll("/","")
+                            + " does not match " + accessAllowedCidrs);
+                    throw new CloudAuthenticationException("Failed to authenticate user '" + username + "' in domain '" + domain.getPath() + "' from ip "
+                            + loginIpAddress.toString().replaceAll("/","") + "; please provide valid credentials");
+                }
+            }
+            // Here all is fine!
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("User: " + username + " in domain " + domainId + " has successfully logged in");
+            }
+            ActionEventUtils.onActionEvent(user.getId(), user.getAccountId(), user.getDomainId(), EventTypes.EVENT_USER_LOGIN,
+                    "user has logged in from IP Address " + loginIpAddress);
+            return user;
+        } else {
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("User: " + username + " in domain " + domainId + " has failed to log in");
+            }
+            return null;
+        }
+    }
+
     private UserAccount getUserAccount(String username, String password, Long domainId, Map<String, Object[]> requestParameters) {
         if (s_logger.isDebugEnabled()) {
             s_logger.debug("Attempting to log in user: " + username + " in domain " + domainId);

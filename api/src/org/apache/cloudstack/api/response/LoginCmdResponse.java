@@ -69,6 +69,9 @@ public class LoginCmdResponse extends AuthenticationCmdResponse {
     @SerializedName(value = ApiConstants.SESSIONKEY)
     @Param(description = "Session key that can be passed in subsequent Query command calls", isSensitive = true)
     private String sessionKey;
+    @SerializedName("cookie")
+    @Param(description = "Cookie value")
+    private String cookie;
 
     public String getUsername() {
         return username;
@@ -162,5 +165,11 @@ public class LoginCmdResponse extends AuthenticationCmdResponse {
 
     public void setSessionKey(String sessionKey) {
         this.sessionKey = sessionKey;
+    }
+
+    public String getCookie(){ return cookie; }
+
+    public void setCookie(String cookie) {
+        this.cookie = cookie;
     }
 }

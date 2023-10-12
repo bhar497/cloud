@@ -994,6 +994,15 @@ public class ApiServer extends ManagerBase implements HttpRequestHandler, ApiSer
             session.removeAttribute("user_UUID");
             session.removeAttribute("domain_UUID");
         }
+        String username = null;
+        String account = null;
+        String firstname = null;
+        String lastname = null;
+        String type = null;
+        String timezone = null;
+        String timezoneoffset = null;
+        String registered = null;
+        String sessionkey = null;
 
         final Enumeration attrNames = session.getAttributeNames();
         if (attrNames != null) {
@@ -1002,32 +1011,43 @@ public class ApiServer extends ManagerBase implements HttpRequestHandler, ApiSer
                 final Object attrObj = session.getAttribute(attrName);
                 if (ApiConstants.USERNAME.equalsIgnoreCase(attrName)) {
                     response.setUsername(attrObj.toString());
+                    username = attrObj.toString();
                 }
                 if (ApiConstants.ACCOUNT.equalsIgnoreCase(attrName)) {
                     response.setAccount(attrObj.toString());
+                    account = attrObj.toString();
                 }
                 if (ApiConstants.FIRSTNAME.equalsIgnoreCase(attrName)) {
                     response.setFirstName(attrObj.toString());
+                    firstname = attrObj.toString();
                 }
                 if (ApiConstants.LASTNAME.equalsIgnoreCase(attrName)) {
                     response.setLastName(attrObj.toString());
+                    lastname = attrObj.toString();
                 }
                 if (ApiConstants.TYPE.equalsIgnoreCase(attrName)) {
                     response.setType((attrObj.toString()));
+                    type = attrObj.toString();
                 }
                 if (ApiConstants.TIMEZONE.equalsIgnoreCase(attrName)) {
                     response.setTimeZone(attrObj.toString());
+                    timezone = attrObj.toString();
                 }
                 if (ApiConstants.TIMEZONEOFFSET.equalsIgnoreCase(attrName)) {
                     response.setTimeZoneOffset(attrObj.toString());
+                    timezoneoffset = attrObj.toString();
                 }
                 if (ApiConstants.REGISTERED.equalsIgnoreCase(attrName)) {
                     response.setRegistered(attrObj.toString());
+                    registered = attrObj.toString();
                 }
                 if (ApiConstants.SESSIONKEY.equalsIgnoreCase(attrName)) {
                     response.setSessionKey(attrObj.toString());
+                    sessionkey = attrObj.toString();
                 }
             }
+            response.setCookie(String.format("JSESSIONID=%s;account=%s;domainid=%s;role=%s;sessionkey=%s;timezone=%s;timezoneoffset=%s;userfullname=%s;userid=%s;username=%s",
+                    session.getId(), account, domain_UUID, type, sessionkey, timezone, timezoneoffset, firstname + " " + lastname, user_UUID, username));
         }
         response.setResponseName("loginresponse");
         return response;
@@ -1046,6 +1066,76 @@ public class ApiServer extends ManagerBase implements HttpRequestHandler, ApiSer
         }
 
         final UserAccount userAcct = accountMgr.authenticateUser(username, password, domainId, loginIpAddress, requestParameters);
+        if (userAcct != null) {
+            final String timezone = userAcct.getTimezone();
+            float offsetInHrs = 0f;
+            if (timezone != null) {
+                final TimeZone t = TimeZone.getTimeZone(timezone);
+                s_logger.info("Current user logged in under " + timezone + " timezone");
+
+                final java.util.Date date = new java.util.Date();
+                final long longDate = date.getTime();
+                final float offsetInMs = (t.getOffset(longDate));
+                offsetInHrs = offsetInMs / (1000 * 60 * 60);
+                s_logger.info("Timezone offset from UTC is: " + offsetInHrs);
+            }
+
+            final Account account = accountMgr.getAccount(userAcct.getAccountId());
+
+            // set the userId and account object for everyone
+            session.setAttribute("userid", userAcct.getId());
+            final UserVO user = (UserVO)accountMgr.getActiveUser(userAcct.getId());
+            if (user.getUuid() != null) {
+                session.setAttribute("user_UUID", user.getUuid());
+            }
+
+            session.setAttribute("username", userAcct.getUsername());
+            session.setAttribute("firstname", userAcct.getFirstname());
+            session.setAttribute("lastname", userAcct.getLastname());
+            session.setAttribute("accountobj", account);
+            session.setAttribute("account", account.getAccountName());
+
+            session.setAttribute("domainid", account.getDomainId());
+            final DomainVO domain = (DomainVO)domainMgr.getDomain(account.getDomainId());
+            if (domain.getUuid() != null) {
+                session.setAttribute("domain_UUID", domain.getUuid());
+            }
+
+            session.setAttribute("type", Short.valueOf(account.getType()).toString());
+            session.setAttribute("registrationtoken", userAcct.getRegistrationToken());
+            session.setAttribute("registered", Boolean.toString(userAcct.isRegistered()));
+
+            if (timezone != null) {
+                session.setAttribute("timezone", timezone);
+                session.setAttribute("timezoneoffset", Float.valueOf(offsetInHrs).toString());
+            }
+
+            // (bug 5483) generate a session key that the user must submit on every request to prevent CSRF, add that
+            // to the login response so that session-based authenticators know to send the key back
+            final SecureRandom sesssionKeyRandom = new SecureRandom();
+            final byte sessionKeyBytes[] = new byte[20];
+            sesssionKeyRandom.nextBytes(sessionKeyBytes);
+            final String sessionKey = Base64.encodeBase64URLSafeString(sessionKeyBytes);
+            session.setAttribute(ApiConstants.SESSIONKEY, sessionKey);
+
+            return createLoginResponse(session);
+        }
+        throw new CloudAuthenticationException("Failed to authenticate user " + username + " in domain " + domainId + "; please provide valid credentials");
+    }
+
+    @Override
+    public ResponseObject impersonateUser(final HttpSession session, final String username, Long domainId, final String domainPath, final InetAddress loginIpAddress,
+                                          final Map<String, Object[]> requestParameters) throws CloudAuthenticationException {
+        // We will always use domainId first. If that does not exist, we will use domain name. If THAT doesn't exist
+        // we will default to ROOT
+        final Domain userDomain = domainMgr.findDomainByIdOrPath(domainId, domainPath);
+        if (userDomain == null || userDomain.getId() < 1L) {
+            throw new CloudAuthenticationException("Unable to find the domain from the path " + domainPath);
+        } else {
+            domainId = userDomain.getId();
+        }
+
+        final UserAccount userAcct = accountMgr.impersonateUser(username, domainId, loginIpAddress, requestParameters);
         if (userAcct != null) {
             final String timezone = userAcct.getTimezone();
             float offsetInHrs = 0f;

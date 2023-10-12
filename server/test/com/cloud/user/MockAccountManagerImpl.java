@@ -279,6 +279,11 @@ public class MockAccountManagerImpl extends ManagerBase implements Manager, Acco
     }
 
     @Override
+    public UserAccount impersonateUser(String username, Long domainId, InetAddress loginIpAddress, Map<String, Object[]> requestParameters) {
+        return null;
+    }
+
+    @Override
     public Pair<User, Account> findUserByApiKey(String apiKey) {
         return null;
     }

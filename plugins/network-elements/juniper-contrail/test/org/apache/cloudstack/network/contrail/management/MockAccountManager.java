@@ -262,6 +262,11 @@ public class MockAccountManager extends ManagerBase implements AccountManager {
     }
 
     @Override
+    public UserAccount impersonateUser(String username, Long domainId, InetAddress loginIpAddress, Map<String, Object[]> requestParameters) {
+        return null;
+    }
+
+    @Override
     public void buildACLSearchBuilder(
             SearchBuilder<? extends ControlledEntity> arg0, Long arg1,
             boolean arg2, List<Long> arg3, ListProjectResourcesCriteria arg4) {

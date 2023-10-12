@@ -77,6 +77,9 @@ public interface AccountManager extends AccountService, Configurable{
       */
     UserAccount authenticateUser(String username, String password, Long domainId, InetAddress loginIpAddress, Map<String, Object[]> requestParameters);
 
+
+    UserAccount impersonateUser(String username, Long domainId, InetAddress loginIpAddress, Map<String, Object[]> requestParameters);
+
     /**
      * Locate a user by their apiKey
      *
