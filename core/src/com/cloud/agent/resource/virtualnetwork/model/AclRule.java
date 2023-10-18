@@ -22,14 +22,20 @@ package com.cloud.agent.resource.virtualnetwork.model;
 public abstract class AclRule {
     private String cidr;
     private boolean allowed;
+    private String destCidr;
+    private Long ruleId;
 
     public String getCidr() {
         return cidr;
     }
 
+    public String getDestCidr() { return destCidr; }
+
     public void setCidr(String cidr) {
         this.cidr = cidr;
     }
+
+    public void setDestCidr(String destCidr) { this.destCidr = destCidr; }
 
     public boolean isAllowed() {
         return allowed;
@@ -43,9 +49,11 @@ public abstract class AclRule {
         // Empty constructor for (de)serialization
     }
 
-    protected AclRule(String cidr, boolean allowed) {
+    protected AclRule(String cidr, String destCidr, boolean allowed, long ruleId) {
         this.cidr = cidr;
+        this.destCidr = destCidr;
         this.allowed = allowed;
+        this.ruleId = ruleId;
     }
 
 }

@@ -69,6 +69,12 @@ public class CreateNetworkACLCmd extends BaseAsyncCreateCmd {
     @Parameter(name = ApiConstants.CIDR_LIST, type = CommandType.LIST, collectionType = CommandType.STRING, description = "the CIDR list to allow traffic from/to")
     private List<String> cidrlist;
 
+    @Parameter(name = ApiConstants.SOURCE_CIDR_LIST, type = CommandType.LIST, collectionType = CommandType.STRING, description = "the CIDR list to allow traffic from/to")
+    private List<String> sourceCidrList;
+
+    @Parameter(name = ApiConstants.DEST_CIDR_LIST, type = CommandType.LIST, collectionType = CommandType.STRING, description = "the CIDR list to allow traffic from/to")
+    private List<String> destCidrList;
+
     @Parameter(name = ApiConstants.ICMP_TYPE, type = CommandType.INTEGER, description = "type of the ICMP message being sent")
     private Integer icmpType;
 
@@ -130,7 +136,21 @@ public class CreateNetworkACLCmd extends BaseAsyncCreateCmd {
     }
 
     public List<String> getSourceCidrList() {
-        if (cidrlist != null) {
+        if (sourceCidrList != null) {
+            return sourceCidrList;
+        } else if (cidrlist != null && (trafficType.equalsIgnoreCase(NetworkACLItem.TrafficType.Ingress.toString()))) {
+            return cidrlist;
+        } else {
+            List<String> oneCidrList = new ArrayList<String>();
+            oneCidrList.add(NetUtils.ALL_IP4_CIDRS);
+            return oneCidrList;
+        }
+    }
+
+    public List<String> getDestCidrList() {
+        if (destCidrList != null) {
+            return destCidrList;
+        } else if (cidrlist != null && (trafficType.equalsIgnoreCase(NetworkACLItem.TrafficType.Egress.toString()))) {
             return cidrlist;
         } else {
             List<String> oneCidrList = new ArrayList<String>();

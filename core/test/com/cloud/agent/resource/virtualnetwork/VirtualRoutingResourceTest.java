@@ -395,11 +395,14 @@ public class VirtualRoutingResourceTest implements VirtualRouterDeployer {
     protected SetNetworkACLCommand generateSetNetworkACLCommand() {
         final List<NetworkACLTO> acls = new ArrayList<>();
         final List<String> cidrs = new ArrayList<>();
+        final List<String> destcidrs = new ArrayList<>();
+
         cidrs.add("192.168.0.1/24");
         cidrs.add("192.168.0.2/24");
-        acls.add(new NetworkACLTO(1, "64", "TCP", 20, 80, false, false, cidrs, 0, 0, TrafficType.Ingress, true, 1));
-        acls.add(new NetworkACLTO(2, "64", "ICMP", 0, 0, false, false, cidrs, -1, -1, TrafficType.Ingress, false, 2));
-        acls.add(new NetworkACLTO(3, "65", "ALL", 0, 0, false, false, cidrs, -1, -1, TrafficType.Egress, true, 3));
+        destcidrs.add("192.168.0.3/24");
+        acls.add(new NetworkACLTO(1, "64", "TCP", 20, 80, false, false, cidrs, destcidrs, 0, 0, TrafficType.Ingress, true, 1));
+        acls.add(new NetworkACLTO(2, "64", "ICMP", 0, 0, false, false, cidrs, destcidrs, -1, -1, TrafficType.Ingress, false, 2));
+        acls.add(new NetworkACLTO(3, "65", "ALL", 0, 0, false, false, cidrs, destcidrs, -1, -1, TrafficType.Egress, true, 3));
         final NicTO nic = new NicTO();
         nic.setMac("01:23:45:67:89:AB");
         nic.setIp("192.168.1.1");

@@ -29,11 +29,11 @@ import com.cloud.utils.db.GenericDao;
  */
 public interface NetworkACLItemCidrsDao extends GenericDao<NetworkACLItemCidrsVO, Long> {
 
-    void persist(long networkACLItemId, List<String> cidrs);
+    void persist(long networkACLItemId, List<String> cidrs, boolean isSourceCidr);
 
-    void updateCidrs(long networkACLItemId, List<String> cidrs);
+    void updateCidrs(long networkACLItemId, List<String> cidrs, boolean isSourceCidr);
 
-    List<String> getCidrs(long networkACLItemId);
+    List<String> getCidrs(long networkACLItemId, boolean isSourceCidr);
 
     @DB
     List<NetworkACLItemCidrsVO> listByNetworkACLItemId(long networkACLItemId);

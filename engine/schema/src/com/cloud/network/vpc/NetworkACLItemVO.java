@@ -84,6 +84,9 @@ public class NetworkACLItemVO implements NetworkACLItem {
     @Transient
     List<String> sourceCidrs;
 
+    @Transient
+    List<String> destCidrList;
+
     @Column(name = "uuid")
     String uuid;
 
@@ -101,7 +104,7 @@ public class NetworkACLItemVO implements NetworkACLItem {
         uuid = UUID.randomUUID().toString();
     }
 
-    public NetworkACLItemVO(Integer portStart, Integer portEnd, String protocol, long aclId, List<String> sourceCidrs, Integer icmpCode, Integer icmpType,
+    public NetworkACLItemVO(Integer portStart, Integer portEnd, String protocol, long aclId, List<String> sourceCidrs, List<String> destCidrList, Integer icmpCode, Integer icmpType,
             TrafficType trafficType, Action action, int number) {
         sourcePortStart = portStart;
         sourcePortEnd = portEnd;
@@ -111,6 +114,7 @@ public class NetworkACLItemVO implements NetworkACLItem {
         this.icmpCode = icmpCode;
         this.icmpType = icmpType;
         setSourceCidrList(sourceCidrs);
+        setDestCidrList(destCidrList);
         uuid = UUID.randomUUID().toString();
         this.trafficType = trafficType;
         this.action = action;
@@ -121,10 +125,17 @@ public class NetworkACLItemVO implements NetworkACLItem {
         this.sourceCidrs = sourceCidrs;
     }
 
+    public void  setDestCidrList(List<String> destCidrList) {
+        this.destCidrList = destCidrList;
+    }
+
     @Override
     public List<String> getSourceCidrList() {
         return sourceCidrs;
     }
+
+    @Override
+    public List<String> getDestCidrList() { return destCidrList; }
 
     @Override
     public long getId() {
@@ -230,6 +241,15 @@ public class NetworkACLItemVO implements NetworkACLItem {
             srcCidrs.add(st.nextToken());
         }
         this.sourceCidrs = srcCidrs;
+    }
+
+    public void setDestCidrs(String destCidrList) {
+        List<String> destCidrs = new LinkedList<String>();
+        StringTokenizer st = new StringTokenizer(destCidrList,",;");
+        while(st.hasMoreTokens()) {
+            destCidrs.add(st.nextToken());
+        }
+        this.destCidrList = destCidrs;
     }
 
     public void setNumber(int number) {

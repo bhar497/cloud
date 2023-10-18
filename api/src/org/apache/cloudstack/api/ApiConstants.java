@@ -55,6 +55,8 @@ public class ApiConstants {
     public static final String IP6_CIDR = "ip6cidr";
     public static final String CIDR_LIST = "cidrlist";
     public static final String DEST_CIDR_LIST = "destcidrlist";
+
+    public static final String SOURCE_CIDR_LIST = "sourcecidrlist";
     public static final String CLEANUP = "cleanup";
     public static final String MAKEREDUNDANT = "makeredundant";
     public static final String CLUSTER_ID = "clusterid";

@@ -78,7 +78,7 @@ public interface NetworkACLManager {
      * @param forDisplay TODO
      * @return
      */
-    NetworkACLItem createNetworkACLItem(Integer sourcePortStart, Integer sourcePortEnd, String protocol, List<String> sourceCidrList, Integer icmpCode, Integer icmpType,
+    NetworkACLItem createNetworkACLItem(Integer sourcePortStart, Integer sourcePortEnd, String protocol, List<String> sourceCidrList, List<String> destCidrList, Integer icmpCode, Integer icmpType,
         NetworkACLItem.TrafficType trafficType, Long aclId, String action, Integer number, Boolean forDisplay);
 
     /**
@@ -137,7 +137,7 @@ public interface NetworkACLManager {
      * @return
      * @throws ResourceUnavailableException
      */
-    NetworkACLItem updateNetworkACLItem(Long id, String protocol, List<String> sourceCidrList, NetworkACLItem.TrafficType trafficType, String action, Integer number,
+    NetworkACLItem updateNetworkACLItem(Long id, String protocol, List<String> sourceCidrList,List<String> destCidrList, NetworkACLItem.TrafficType trafficType, String action, Integer number,
         Integer sourcePortStart, Integer sourcePortEnd, Integer icmpCode, Integer icmpType, String customId, Boolean forDisplay) throws ResourceUnavailableException;
 
     /**

@@ -16,8 +16,10 @@
 // under the License.
 package org.apache.cloudstack.api.command.user.network;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.cloud.utils.net.NetUtils;
 import org.apache.cloudstack.acl.RoleType;
 import org.apache.cloudstack.api.APICommand;
 import org.apache.cloudstack.api.ApiConstants;
@@ -66,6 +68,12 @@ public class UpdateNetworkACLItemCmd extends BaseAsyncCustomIdCmd {
     @Parameter(name = ApiConstants.CIDR_LIST, type = CommandType.LIST, collectionType = CommandType.STRING, description = "the cidr list to allow traffic from/to")
     private List<String> cidrlist;
 
+    @Parameter(name = ApiConstants.SOURCE_CIDR_LIST, type = CommandType.LIST, collectionType = CommandType.STRING, description = "the CIDR list to allow traffic from/to")
+    private List<String> sourceCidrList;
+
+    @Parameter(name = ApiConstants.DEST_CIDR_LIST, type = CommandType.LIST, collectionType = CommandType.STRING, description = "the CIDR list to allow traffic from/to")
+    private List<String> destCidrList;
+
     @Parameter(name = ApiConstants.ICMP_TYPE, type = CommandType.INTEGER, description = "type of the ICMP message being sent")
     private Integer icmpType;
 
@@ -110,7 +118,32 @@ public class UpdateNetworkACLItemCmd extends BaseAsyncCustomIdCmd {
     }
 
     public List<String> getSourceCidrList() {
-        return cidrlist;
+        if (sourceCidrList != null) {
+            return sourceCidrList;
+        } else if (cidrlist != null) {
+            return cidrlist;
+        } else {
+            List<String> oneCidrList = new ArrayList<String>();
+            oneCidrList.add(NetUtils.ALL_IP4_CIDRS);
+            return oneCidrList;
+        }
+    }
+
+
+    public List<String> getDestCidrList() {
+        if (destCidrList != null) {
+            return destCidrList;
+        } else if (cidrlist != null) {
+            return cidrlist;
+        } else {
+            List<String> oneCidrList = new ArrayList<String>();
+            oneCidrList.add(NetUtils.ALL_IP4_CIDRS);
+            return oneCidrList;
+        }
+    }
+
+    public void setDestCidrList(List<String> destCidrList) {
+        this.destCidrList = destCidrList;
     }
 
     public NetworkACLItem.TrafficType getTrafficType() {
@@ -177,7 +210,7 @@ public class UpdateNetworkACLItemCmd extends BaseAsyncCustomIdCmd {
     public void execute() throws ResourceUnavailableException {
         CallContext.current().setEventDetails("Rule Id: " + getId());
         NetworkACLItem aclItem =
-            _networkACLService.updateNetworkACLItem(getId(), getProtocol(), getSourceCidrList(), getTrafficType(), getAction(), getNumber(), getSourcePortStart(),
+            _networkACLService.updateNetworkACLItem(getId(), getProtocol(), getSourceCidrList(), getDestCidrList(), getTrafficType(), getAction(), getNumber(), getSourcePortStart(),
                 getSourcePortEnd(), getIcmpCode(), getIcmpType(), this.getCustomId(), this.isDisplay());
         if (aclItem == null) {
             throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, "Failed to update network ACL item");

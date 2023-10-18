@@ -22,14 +22,23 @@ package com.cloud.agent.resource.virtualnetwork.model;
 public class ProtocolAclRule extends AclRule {
     private final String type = "protocol";
     private int protocol;
+    private int firstPort;
+    private int lastPort;
 
     public ProtocolAclRule() {
         // Empty constructor for (de)serialization
     }
 
-    public ProtocolAclRule(String cidr, boolean allowed, int protocol) {
-        super(cidr, allowed);
+    public ProtocolAclRule(String cidr, String destCidr, boolean allowed, int protocol, long ruleId) {
+        super(cidr, destCidr, allowed, ruleId);
         this.protocol = protocol;
+    }
+
+    public ProtocolAclRule(String cidr, String destCidr, boolean allowed, int protocol, int firstPort, int lastPort, long ruleId) {
+        super(cidr, destCidr, allowed, ruleId);
+        this.protocol = protocol;
+        this.firstPort = firstPort;
+        this.lastPort = lastPort;
     }
 
     public int getProtocol() {
@@ -40,4 +49,19 @@ public class ProtocolAclRule extends AclRule {
         this.protocol = protocol;
     }
 
+    public int getFirstPort() {
+        return firstPort;
+    }
+
+    public void setFirstPort(int firstPort) {
+        this.firstPort = firstPort;
+    }
+
+    public int getLastPort() {
+        return lastPort;
+    }
+
+    public void setLastPort(int lastPort) {
+        this.lastPort = lastPort;
+    }
 }

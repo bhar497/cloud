@@ -26,8 +26,8 @@ public class AllAclRule extends AclRule {
         // Empty constructor for (de)serialization
     }
 
-    public AllAclRule(String cidr, boolean allowed) {
-        super(cidr, allowed);
+    public AllAclRule(String cidr, String destCidr, boolean allowed, long ruleId) {
+        super(cidr, destCidr, allowed, ruleId);
     }
 
 }

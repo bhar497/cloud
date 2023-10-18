@@ -37,18 +37,26 @@ public class NetworkACLItemCidrsVO implements InternalIdentity {
     @Column(name = "id")
     private Long id;
 
+    public void setNetworkACLItemId(long networkACLItemId) {
+        this.networkACLItemId = networkACLItemId;
+    }
+
     @Column(name = "network_acl_item_id")
     private long networkACLItemId;
 
     @Column(name = "cidr")
     private String cidrList;
 
+    @Column(name = "is_source_cidr")
+    private Boolean isSourceCidr;
+
     public NetworkACLItemCidrsVO() {
     }
 
-    public NetworkACLItemCidrsVO(long networkAclItemId, String cidrList) {
+    public NetworkACLItemCidrsVO(long networkAclItemId, String cidrList, Boolean isSourceCidr) {
         this.networkACLItemId = networkAclItemId;
         this.cidrList = cidrList;
+        this.isSourceCidr = isSourceCidr;
     }
 
     /* (non-Javadoc)
@@ -73,6 +81,18 @@ public class NetworkACLItemCidrsVO implements InternalIdentity {
 
     public void setCidrList(String cidrList) {
         this.cidrList = cidrList;
+    }
+
+    public Boolean getIsSourceCidr() {
+        if(isSourceCidr == null) {
+            return true;
+        } else {
+            return isSourceCidr;
+        }
+    }
+
+    public void setIsSourceCidr(boolean isSourceCidr) {
+        this.isSourceCidr = isSourceCidr;
     }
 
 }

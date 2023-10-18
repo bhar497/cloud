@@ -44,6 +44,7 @@ public class NetworkACLItemCidrsDaoImpl extends GenericDaoBase<NetworkACLItemCid
     protected NetworkACLItemCidrsDaoImpl() {
         cidrsSearch = createSearchBuilder();
         cidrsSearch.and("networkAclItemId", cidrsSearch.entity().getNetworkACLItemId(), SearchCriteria.Op.EQ);
+        cidrsSearch.and("isSourceCidr", cidrsSearch.entity().getIsSourceCidr(), SearchCriteria.Op.EQ);
         cidrsSearch.done();
     }
 
@@ -51,25 +52,25 @@ public class NetworkACLItemCidrsDaoImpl extends GenericDaoBase<NetworkACLItemCid
      * @see com.cloud.network.dao.NetworkAclItemCidrsDao#persist(long, java.util.List)
      */
     @Override
-    public void persist(long networkACLItemId, List<String> cidrs) {
+    public void persist(long networkACLItemId, List<String> cidrs, boolean isSourceCidr) {
         TransactionLegacy txn = TransactionLegacy.currentTxn();
 
         txn.start();
         for (String cidr : cidrs) {
-            NetworkACLItemCidrsVO vo = new NetworkACLItemCidrsVO(networkACLItemId, cidr);
+            NetworkACLItemCidrsVO vo = new NetworkACLItemCidrsVO(networkACLItemId, cidr, isSourceCidr);
             persist(vo);
         }
         txn.commit();
     }
 
     @Override
-    public void updateCidrs(long networkACLItemId, List<String> cidrs) {
-        List<String> oldCidrs = getCidrs(networkACLItemId);
+    public void updateCidrs(long networkACLItemId, List<String> cidrs, boolean isSourceCidr) {
+        List<String> oldCidrs = getCidrs(networkACLItemId, isSourceCidr);
         if (!(oldCidrs.size() == cidrs.size() && oldCidrs.equals(cidrs))) {
             SearchCriteria<NetworkACLItemCidrsVO> sc = cidrsSearch.create();
             sc.setParameters("networkAclItemId", networkACLItemId);
             remove(sc);
-            persist(networkACLItemId, cidrs);
+            persist(networkACLItemId, cidrs, isSourceCidr);
         }
     }
 
@@ -77,9 +78,10 @@ public class NetworkACLItemCidrsDaoImpl extends GenericDaoBase<NetworkACLItemCid
      * @see com.cloud.network.dao.NetworkAclItemCidrsDao#getCidrs(long)
      */
     @Override
-    public List<String> getCidrs(long networkACLItemId) {
+    public List<String> getCidrs(long networkACLItemId, boolean isSourceCidr) {
         SearchCriteria<NetworkACLItemCidrsVO> sc = cidrsSearch.create();
         sc.setParameters("networkAclItemId", networkACLItemId);
+        sc.setParameters("isSourceCidr", isSourceCidr);
 
         List<NetworkACLItemCidrsVO> results = search(sc, null);
         List<String> cidrs = new ArrayList<String>(results.size());

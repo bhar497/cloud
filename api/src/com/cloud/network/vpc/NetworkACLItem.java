@@ -70,6 +70,8 @@ public interface NetworkACLItem extends InternalIdentity, Identity, Displayable 
 
     List<String> getSourceCidrList();
 
+    List<String> getDestCidrList();
+
     /**
      * @return
      */

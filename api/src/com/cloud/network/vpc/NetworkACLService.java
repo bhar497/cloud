@@ -119,7 +119,7 @@ public interface NetworkACLService {
      * @return
      * @throws ResourceUnavailableException
      */
-    NetworkACLItem updateNetworkACLItem(Long id, String protocol, List<String> sourceCidrList, NetworkACLItem.TrafficType trafficType, String action, Integer number,
+    NetworkACLItem updateNetworkACLItem(Long id, String protocol, List<String> sourceCidrList, List<String> destCidrList, NetworkACLItem.TrafficType trafficType, String action, Integer number,
             Integer sourcePortStart, Integer sourcePortEnd, Integer icmpCode, Integer icmpType, String newUUID, Boolean forDisplay) throws ResourceUnavailableException;
 
     /**

@@ -34,6 +34,7 @@ public class NetworkACLTO implements InternalIdentity {
     boolean revoked;
     boolean alreadyAdded;
     private List<String> cidrList;
+    private List<String> destCidrList;
     private Integer icmpType;
     private Integer icmpCode;
     private TrafficType trafficType;
@@ -44,7 +45,7 @@ public class NetworkACLTO implements InternalIdentity {
     }
 
     public NetworkACLTO(long id, String vlanTag, String protocol, Integer portStart, Integer portEnd, boolean revoked, boolean alreadyAdded, List<String> cidrList,
-            Integer icmpType, Integer icmpCode, TrafficType trafficType, boolean allow, int number) {
+            List<String> destCidrList, Integer icmpType, Integer icmpCode, TrafficType trafficType, boolean allow, int number) {
         this.vlanTag = vlanTag;
         this.protocol = protocol;
 
@@ -66,6 +67,7 @@ public class NetworkACLTO implements InternalIdentity {
         this.revoked = revoked;
         this.alreadyAdded = alreadyAdded;
         this.cidrList = cidrList;
+        this.destCidrList = destCidrList;
         this.icmpType = icmpType;
         this.icmpCode = icmpCode;
         this.trafficType = trafficType;
@@ -88,6 +90,7 @@ public class NetworkACLTO implements InternalIdentity {
             rule.getState() == NetworkACLItem.State.Revoke,
             rule.getState() == NetworkACLItem.State.Active,
             rule.getSourceCidrList(),
+            rule.getDestCidrList(),
             rule.getIcmpType(),
             rule.getIcmpCode(),
             trafficType,
@@ -134,6 +137,8 @@ public class NetworkACLTO implements InternalIdentity {
     public List<String> getSourceCidrList() {
         return cidrList;
     }
+
+    public List<String> getDestCidrList() { return destCidrList; }
 
     public boolean isAlreadyAdded() {
         return alreadyAdded;

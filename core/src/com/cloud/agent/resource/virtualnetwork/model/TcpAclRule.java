@@ -28,8 +28,8 @@ public class TcpAclRule extends AclRule {
         // Empty contructor for (de)serialization
     }
 
-    public TcpAclRule(String cidr, boolean allowed, int firstPort, int lastPort) {
-        super(cidr, allowed);
+    public TcpAclRule(String cidr, String destCidr, boolean allowed, int firstPort, int lastPort, long ruleId) {
+        super(cidr, destCidr, allowed, ruleId);
         this.firstPort = firstPort;
         this.lastPort = lastPort;
     }

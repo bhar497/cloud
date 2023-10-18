@@ -28,8 +28,8 @@ public class IcmpAclRule extends AclRule {
         // Empty constructor for (de)serialization
     }
 
-    public IcmpAclRule(String cidr, boolean allowed, int icmpType, int icmpCode) {
-        super(cidr, allowed);
+    public IcmpAclRule(String cidr, String destCidr, boolean allowed, int icmpType, int icmpCode, long ruleId) {
+        super(cidr, destCidr, allowed, ruleId);
         this.icmpType = icmpType;
         this.icmpCode = icmpCode;
     }

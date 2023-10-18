@@ -2340,6 +2340,7 @@ public class ApiResponseHelper implements ResponseGenerator {
         }
 
         response.setCidrList(StringUtils.join(aclItem.getSourceCidrList(), ","));
+        response.setDestCidrList(StringUtils.join(aclItem.getDestCidrList(), ","));
 
         response.setTrafficType(aclItem.getTrafficType().toString());
 

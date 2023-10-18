@@ -376,15 +376,15 @@ public class NetworkACLServiceImpl extends ManagerBase implements NetworkACLServ
             }
         }
 
-        validateNetworkACLItem(aclItemCmd.getSourcePortStart(), aclItemCmd.getSourcePortEnd(), aclItemCmd.getSourceCidrList(), aclItemCmd.getProtocol(),
+        validateNetworkACLItem(aclItemCmd.getSourcePortStart(), aclItemCmd.getSourcePortEnd(), aclItemCmd.getSourceCidrList(), aclItemCmd.getDestCidrList(), aclItemCmd.getProtocol(),
                 aclItemCmd.getIcmpCode(), aclItemCmd.getIcmpType(), aclItemCmd.getAction(), aclItemCmd.getNumber());
 
         return _networkAclMgr.createNetworkACLItem(aclItemCmd.getSourcePortStart(), aclItemCmd.getSourcePortEnd(), aclItemCmd.getProtocol(),
-                aclItemCmd.getSourceCidrList(), aclItemCmd.getIcmpCode(), aclItemCmd.getIcmpType(), aclItemCmd.getTrafficType(), aclId, aclItemCmd.getAction(),
+                aclItemCmd.getSourceCidrList(), aclItemCmd.getDestCidrList(), aclItemCmd.getIcmpCode(), aclItemCmd.getIcmpType(), aclItemCmd.getTrafficType(), aclId, aclItemCmd.getAction(),
                 aclItemCmd.getNumber(), aclItemCmd.getDisplay());
     }
 
-    private void validateNetworkACLItem(final Integer portStart, final Integer portEnd, final List<String> sourceCidrList, final String protocol, final Integer icmpCode, final Integer icmpType,
+    private void validateNetworkACLItem(final Integer portStart, final Integer portEnd, final List<String> sourceCidrList, final List<String> destCidrList, final String protocol, final Integer icmpCode, final Integer icmpType,
             final String action, final Integer number) {
 
         if (portStart != null && !NetUtils.isValidPort(portStart)) {
@@ -408,6 +408,14 @@ public class NetworkACLServiceImpl extends ManagerBase implements NetworkACLServ
             for (final String cidr : sourceCidrList) {
                 if (!NetUtils.isValidIp4Cidr(cidr)) {
                     throw new ServerApiException(ApiErrorCode.PARAM_ERROR, "Source cidrs formatting error " + cidr);
+                }
+            }
+        }
+
+        if (destCidrList != null) {
+            for (final String cidr : destCidrList) {
+                if (!NetUtils.isValidIp4Cidr(cidr)) {
+                    throw new ServerApiException(ApiErrorCode.PARAM_ERROR, "dest cidrs formatting error " + cidr);
                 }
             }
         }
@@ -627,7 +635,7 @@ public class NetworkACLServiceImpl extends ManagerBase implements NetworkACLServ
     }
 
     @Override
-    public NetworkACLItem updateNetworkACLItem(final Long id, final String protocol, final List<String> sourceCidrList, final NetworkACLItem.TrafficType trafficType, final String action,
+    public NetworkACLItem updateNetworkACLItem(final Long id, final String protocol, final List<String> sourceCidrList, final List<String> destCidrList, final NetworkACLItem.TrafficType trafficType, final String action,
             final Integer number, final Integer sourcePortStart, final Integer sourcePortEnd, final Integer icmpCode, final Integer icmpType, final String newUUID, final Boolean forDisplay) throws ResourceUnavailableException {
         final NetworkACLItemVO aclItem = _networkACLItemDao.findById(id);
         if (aclItem == null) {
@@ -655,9 +663,9 @@ public class NetworkACLServiceImpl extends ManagerBase implements NetworkACLServ
         }
 
         validateNetworkACLItem(sourcePortStart == null ? aclItem.getSourcePortStart() : sourcePortStart, sourcePortEnd == null ? aclItem.getSourcePortEnd()
-                : sourcePortEnd, sourceCidrList, protocol, icmpCode, icmpType == null ? aclItem.getIcmpType() : icmpType, action, number);
+                : sourcePortEnd, sourceCidrList, destCidrList, protocol, icmpCode, icmpType == null ? aclItem.getIcmpType() : icmpType, action, number);
 
-        return _networkAclMgr.updateNetworkACLItem(id, protocol, sourceCidrList, trafficType, action, number, sourcePortStart, sourcePortEnd, icmpCode, icmpType, newUUID, forDisplay);
+        return _networkAclMgr.updateNetworkACLItem(id, protocol, sourceCidrList, destCidrList, trafficType, action, number, sourcePortStart, sourcePortEnd, icmpCode, icmpType, newUUID, forDisplay);
     }
 
     @Override

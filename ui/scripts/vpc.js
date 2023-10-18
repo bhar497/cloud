@@ -252,6 +252,11 @@
                 label: 'label.cidr',
                 isEditable: true
             },
+            'destcidrlist': {
+                edit: true,
+                label: 'label.destcidr',
+                isEditable: true
+            },
             action: {
                 label: 'label.action',
                 isEditable: true,
@@ -577,6 +582,7 @@
                     var data = {
                         id: args.context.multiRule[0].id,
                         cidrlist: args.data.cidrlist,
+                        destcidrlist: args.data.destcidrlist,
                         number: args.data.number,
                         protocol: args.data.protocol,
                         traffictype: args.data.traffictype,

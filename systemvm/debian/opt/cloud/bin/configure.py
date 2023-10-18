@@ -220,9 +220,10 @@ class CsAcl(CsDataBag):
         FIXED_RULES_INGRESS = 3
         FIXED_RULES_EGRESS = 3
 
-        def __init__(self, obj, config):
+        def __init__(self, obj, config, ipsets):
             self.ingess = []
             self.egress = []
+            self.ipsets = ipsets
             self.device = obj['device']
             self.ip = obj['nic_ip']
             self.netmask = obj['nic_netmask']
@@ -233,10 +234,14 @@ class CsAcl(CsDataBag):
             if "egress_rules" in obj.keys():
                 self.egress = obj['egress_rules']
             self.fw = config.get_fw()
+            self.ipsets = ipsets
 
         def create(self):
             self.process("ingress", self.ingress, self.FIXED_RULES_INGRESS)
             self.process("egress", self.egress, self.FIXED_RULES_EGRESS)
+            for setname in self.ipsets.keys():
+                logging.info("end ipset name " + setname + " value " + str(self.ipsets[setname]))
+            return self.ipsets
 
         def process(self, direction, rule_list, base):
             count = base
@@ -255,15 +260,19 @@ class CsAcl(CsDataBag):
             def init_vpc(self, direction, acl, rule, config):
                 self.table = ""
                 self.device = acl.device
+                self.ipsets = acl.ipsets
                 self.direction = direction
+                self.cidr = rule['cidr']
+                self.dest_cidr = rule['dest_cidr']
+                self.rule_id = rule['rule_id']
                 # acl is an object of the AclDevice type. So, its fw attribute is already a list.
                 self.fw = acl.fw
                 self.chain = config.get_ingress_chain(self.device, acl.ip)
-                self.dest = "-s %s" % rule['cidr']
+                self.source = "-s %s" % self.cidr
+                self.dest = "-d %s" % self.dest_cidr
                 if direction == "egress":
                     self.table = config.get_egress_table()
                     self.chain = config.get_egress_chain(self.device, acl.ip)
-                    self.dest = "-d %s" % rule['cidr']
                 self.type = ""
                 self.type = rule['type']
                 self.icmp_type = "any"
@@ -287,13 +296,39 @@ class CsAcl(CsDataBag):
                     self.dport = "%s:%s" % (self.dport, rule['last_port'])
 
             def create(self):
+                cidr_list = self.cidr.split(',')
+                dest_cidr_list = self.dest_cidr.split(',')
+                if len(cidr_list) > 1:
+                    ipset_name = self.create_acl_ip_set(self.rule_id, True, cidr_list)
+                    self.source = " -m set --match-set %s src " % ipset_name
+
+                if len(dest_cidr_list) > 1:
+                    ipset_name = self.create_acl_ip_set(self.rule_id, False, dest_cidr_list)
+                    self.dest =  " -m set --match-set %s dst " % ipset_name
+
                 rstr = ""
-                rstr = "%s -A %s -p %s %s" % (rstr, self.chain, self.protocol, self.dest)
+                rstr = "%s -A %s -p %s %s %s" % (rstr, self.chain, self.protocol, self.source, self.dest)
                 if self.type == "icmp":
                     rstr = "%s -m icmp --icmp-type %s" % (rstr, self.icmp_type)
                 rstr = "%s %s -j %s" % (rstr, self.dport, self.action)
                 rstr = rstr.replace("  ", " ").lstrip()
                 self.fw.append([self.table, self.count, rstr])
+
+            def create_acl_ip_set(self, rule_id, is_source, cidr_list):
+                if is_source:
+                    ipset_name = 'sourceACLIpset-%d' % rule_id
+                else:
+                    ipset_name = 'destACLIpset-%d' % rule_id
+
+                if not self.ipsets.has_key(ipset_name):
+                    ipSetCmd = 'ipset create '+ ipset_name + ' hash:net '
+                    CsHelper.execute(ipSetCmd)
+                    for cidr in cidr_list:
+                        ipsetAddCmd = 'ipset add '+ ipset_name + ' '+cidr
+                        CsHelper.execute(ipsetAddCmd)
+
+                self.ipsets[ipset_name] = True
+                return ipset_name
 
     def flushAllowAllEgressRules(self):
         logging.debug("Flush allow 'all' egress firewall rule")
@@ -305,11 +340,19 @@ class CsAcl(CsDataBag):
         CsHelper.execute("ipset -L | grep Name:  | awk {'print $2'} | ipset destroy")
 
     def process(self):
+        for setname in CsHelper.execute("ipset list -n"):
+            if self.config.is_vpc():
+                if setname.startswith("sourceACLIpset") or setname.startswith("destACLIpset"):
+                    self.ipsets[setname] = False
+            else:
+                if setname.startswith("sourceCidrIpset") or setname.startswith("destCidrIpset"):
+                    self.ipsets[setname] = False
+
         for item in self.dbag:
             if item == "id":
                 continue
             if self.config.is_vpc():
-                self.AclDevice(self.dbag[item], self.config).create()
+                self.AclDevice(self.dbag[item], self.config, self.ipsets).create()
             else:
                 self.AclIP(self.dbag[item], self.config).create()
 

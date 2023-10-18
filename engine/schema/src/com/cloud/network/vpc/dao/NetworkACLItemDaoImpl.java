@@ -92,7 +92,8 @@ public class NetworkACLItemDaoImpl extends GenericDaoBase<NetworkACLItemVO, Long
     @Override
     public boolean update(Long id, NetworkACLItemVO item) {
         boolean result = super.update(id, item);
-        _networkACLItemCidrsDao.updateCidrs(item.getId(), item.getSourceCidrList());
+        _networkACLItemCidrsDao.updateCidrs(item.getId(), item.getSourceCidrList(), true);
+        _networkACLItemCidrsDao.updateCidrs(item.getId(), item.getDestCidrList(), false);
         return result;
     }
 
@@ -153,23 +154,26 @@ public class NetworkACLItemDaoImpl extends GenericDaoBase<NetworkACLItemVO, Long
         txn.start();
 
         NetworkACLItemVO dbNetworkACLItem = super.persist(networkAclItem);
-        saveCidrs(networkAclItem, networkAclItem.getSourceCidrList());
+        saveCidrs(networkAclItem, networkAclItem.getSourceCidrList(), true);
+        saveCidrs(networkAclItem, networkAclItem.getDestCidrList(), false);
         loadCidrs(dbNetworkACLItem);
 
         txn.commit();
         return dbNetworkACLItem;
     }
 
-    public void saveCidrs(NetworkACLItemVO networkACLItem, List<String> cidrList) {
+    public void saveCidrs(NetworkACLItemVO networkACLItem, List<String> cidrList, Boolean isSourceCidr) {
         if (cidrList == null) {
             return;
         }
-        _networkACLItemCidrsDao.persist(networkACLItem.getId(), cidrList);
+        _networkACLItemCidrsDao.persist(networkACLItem.getId(), cidrList, isSourceCidr);
     }
 
     @Override
     public void loadCidrs(NetworkACLItemVO item) {
-        List<String> cidrs = _networkACLItemCidrsDao.getCidrs(item.getId());
+        List<String> cidrs = _networkACLItemCidrsDao.getCidrs(item.getId(), true);
+        List<String> destCidrs = _networkACLItemCidrsDao.getCidrs(item.getId(), false);
         item.setSourceCidrList(cidrs);
+        item.setDestCidrList(destCidrs);
     }
 }

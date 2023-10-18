@@ -57,6 +57,10 @@ public class NetworkACLItemResponse extends BaseResponse {
     @Param(description = "the cidr list to forward traffic from")
     private String cidrList;
 
+    @SerializedName(ApiConstants.DEST_CIDR_LIST)
+    @Param(description = "the cidr list to forward traffic to")
+    private String destCidrList;
+
     @SerializedName(ApiConstants.ICMP_TYPE)
     @Param(description = "type of the icmp message being sent")
     private Integer icmpType;
@@ -107,6 +111,10 @@ public class NetworkACLItemResponse extends BaseResponse {
 
     public void setCidrList(String cidrList) {
         this.cidrList = cidrList;
+    }
+
+    public void setDestCidrList(String destCidrList) {
+        this.destCidrList = destCidrList;
     }
 
     public void setIcmpType(Integer icmpType) {

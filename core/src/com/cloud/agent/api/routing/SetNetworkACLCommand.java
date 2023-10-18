@@ -65,6 +65,7 @@ public class SetNetworkACLCommand extends NetworkElementCommand {
             }
 
             List<String> cidr;
+            List<String> destCidr;
             final StringBuilder sb = new StringBuilder();
             sb.append(aclTO.getTrafficType().toString()).append(":").append(aclTO.getProtocol()).append(":");
             if ("icmp".compareTo(aclTO.getProtocol()) == 0) {
@@ -73,6 +74,7 @@ public class SetNetworkACLCommand extends NetworkElementCommand {
                 sb.append(aclTO.getStringPortRange()).append(":");
             }
             cidr = aclTO.getSourceCidrList();
+            destCidr = aclTO.getDestCidrList();
             if (cidr == null || cidr.isEmpty()) {
                 sb.append("0.0.0.0/0");
             } else {
@@ -85,7 +87,21 @@ public class SetNetworkACLCommand extends NetworkElementCommand {
                     firstEntry = false;
                 }
             }
+            sb.append(":");
+            if(destCidr == null || destCidr.isEmpty()) {
+                sb.append("0.0.0.0/0");
+            } else {
+                Boolean firstEntry = true;
+                for (final String tag : destCidr) {
+                    if (!firstEntry) {
+                        sb.append(",");
+                    }
+                    sb.append(tag);
+                    firstEntry = false;
+                }
+            }
             sb.append(":").append(aclTO.getAction()).append(":");
+            sb.append(aclTO.getId()).append(":");
             final String aclRuleEntry = sb.toString();
             result[0][i++] = aclRuleEntry;
         }
