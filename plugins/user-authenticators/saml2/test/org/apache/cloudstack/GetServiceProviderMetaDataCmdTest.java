@@ -19,6 +19,7 @@
 
 package org.apache.cloudstack;
 
+import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.security.KeyPair;
@@ -40,9 +41,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.cloud.utils.HttpUtils;
+import org.mockito.stubbing.Answer;
+import org.opensaml.saml2.metadata.impl.EntityDescriptorBuilder;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GetServiceProviderMetaDataCmdTest {
@@ -88,6 +92,15 @@ public class GetServiceProviderMetaDataCmdTest {
         providerMetadata.setSloUrl("http://test.local");
 
         Mockito.when(samlAuthManager.getSPMetadata()).thenReturn(providerMetadata);
+        Mockito.when(samlAuthManager.getEntityDescriptor(Mockito.any())).thenReturn(new EntityDescriptorBuilder().buildObject());
+        Mockito.doAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                StringWriter writer = invocationOnMock.getArgumentAt(1, StringWriter.class);
+                writer.write("<md:EntityDescriptor></md:EntityDescriptor>");
+                return null;
+            }
+        }).when(samlAuthManager).getDescriptorXmlString(Mockito.any(), Mockito.any());
 
         String result = cmd.authenticate("command", null, session, InetAddress.getByName("127.0.0.1"), HttpUtils.RESPONSE_TYPE_JSON, new StringBuilder(), req, resp);
         Assert.assertTrue(result.contains("md:EntityDescriptor"));

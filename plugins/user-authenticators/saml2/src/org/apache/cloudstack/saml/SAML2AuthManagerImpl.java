@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.StringWriter;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -34,21 +35,36 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpSession;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
+import com.cloud.alert.AlertManager;
+import com.cloud.utils.exception.CloudRuntimeException;
+import org.apache.cloudstack.alert.AlertService;
 import org.apache.cloudstack.api.command.AuthorizeSAMLSSOCmd;
 import org.apache.cloudstack.api.command.GetServiceProviderMetaDataCmd;
+import org.apache.cloudstack.api.command.GetServiceProviderMetaDataParsedCmd;
 import org.apache.cloudstack.api.command.ListAndSwitchSAMLAccountCmd;
 import org.apache.cloudstack.api.command.ListIdpsCmd;
 import org.apache.cloudstack.api.command.ListSamlAuthorizationCmd;
+import org.apache.cloudstack.api.command.RenewServiceProviderCertificateCmd;
 import org.apache.cloudstack.api.command.SAML2LoginAPIAuthenticatorCmd;
 import org.apache.cloudstack.api.command.SAML2LogoutAPIAuthenticatorCmd;
 import org.apache.cloudstack.framework.config.ConfigKey;
@@ -56,31 +72,61 @@ import org.apache.cloudstack.framework.config.Configurable;
 import org.apache.cloudstack.framework.security.keystore.KeystoreDao;
 import org.apache.cloudstack.framework.security.keystore.KeystoreVO;
 import org.apache.cloudstack.utils.security.CertUtils;
+import org.apache.cloudstack.utils.security.ParserUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.log4j.Logger;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.opensaml.Configuration;
 import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.saml2.core.NameIDType;
+import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.ContactPerson;
+import org.opensaml.saml2.metadata.ContactPersonTypeEnumeration;
 import org.opensaml.saml2.metadata.EmailAddress;
 import org.opensaml.saml2.metadata.EntitiesDescriptor;
 import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.GivenName;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.KeyDescriptor;
+import org.opensaml.saml2.metadata.LocalizedString;
+import org.opensaml.saml2.metadata.NameIDFormat;
+import org.opensaml.saml2.metadata.Organization;
 import org.opensaml.saml2.metadata.OrganizationDisplayName;
 import org.opensaml.saml2.metadata.OrganizationName;
 import org.opensaml.saml2.metadata.OrganizationURL;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleLogoutService;
 import org.opensaml.saml2.metadata.SingleSignOnService;
+import org.opensaml.saml2.metadata.impl.AssertionConsumerServiceBuilder;
+import org.opensaml.saml2.metadata.impl.ContactPersonBuilder;
+import org.opensaml.saml2.metadata.impl.EmailAddressBuilder;
+import org.opensaml.saml2.metadata.impl.EntityDescriptorBuilder;
+import org.opensaml.saml2.metadata.impl.GivenNameBuilder;
+import org.opensaml.saml2.metadata.impl.KeyDescriptorBuilder;
+import org.opensaml.saml2.metadata.impl.NameIDFormatBuilder;
+import org.opensaml.saml2.metadata.impl.OrganizationBuilder;
+import org.opensaml.saml2.metadata.impl.OrganizationNameBuilder;
+import org.opensaml.saml2.metadata.impl.OrganizationURLBuilder;
+import org.opensaml.saml2.metadata.impl.SPSSODescriptorBuilder;
+import org.opensaml.saml2.metadata.impl.SingleLogoutServiceBuilder;
 import org.opensaml.saml2.metadata.provider.AbstractReloadingMetadataProvider;
 import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
 import org.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.ConfigurationException;
 import org.opensaml.xml.XMLObject;
+import org.opensaml.xml.io.Marshaller;
+import org.opensaml.xml.io.MarshallingException;
+import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.credential.UsageType;
+import org.opensaml.xml.security.keyinfo.KeyInfoGenerator;
 import org.opensaml.xml.security.keyinfo.KeyInfoHelper;
+import org.opensaml.xml.security.x509.BasicX509Credential;
+import org.opensaml.xml.security.x509.X509KeyInfoGeneratorFactory;
 import org.springframework.stereotype.Component;
 
 import com.cloud.domain.Domain;
@@ -90,6 +136,7 @@ import com.cloud.user.UserVO;
 import com.cloud.user.dao.UserDao;
 import com.cloud.utils.PropertiesUtil;
 import com.cloud.utils.component.AdapterBase;
+import org.w3c.dom.Document;
 
 @Component
 public class SAML2AuthManagerImpl extends AdapterBase implements SAML2AuthManager, Configurable {
@@ -101,6 +148,113 @@ public class SAML2AuthManagerImpl extends AdapterBase implements SAML2AuthManage
     private Timer _timer;
     private int _refreshInterval = SAMLPluginConstants.SAML_REFRESH_INTERVAL;
     private AbstractReloadingMetadataProvider _idpMetaDataProvider;
+
+    private Boolean certExpireAlertSent = false;
+
+    @Override
+    public EntityDescriptor getEntityDescriptor(SAMLProviderMetadata spMetadata) {
+        EntityDescriptor spEntityDescriptor = new EntityDescriptorBuilder().buildObject();
+        spEntityDescriptor.setEntityID(spMetadata.getEntityId());
+
+        SPSSODescriptor spSSODescriptor = new SPSSODescriptorBuilder().buildObject();
+        spSSODescriptor.setWantAssertionsSigned(true);
+        spSSODescriptor.setAuthnRequestsSigned(true);
+
+        X509KeyInfoGeneratorFactory keyInfoGeneratorFactory = new X509KeyInfoGeneratorFactory();
+        keyInfoGeneratorFactory.setEmitEntityCertificate(true);
+        KeyInfoGenerator keyInfoGenerator = keyInfoGeneratorFactory.newInstance();
+
+        KeyDescriptor signKeyDescriptor = new KeyDescriptorBuilder().buildObject();
+        signKeyDescriptor.setUse(UsageType.SIGNING);
+
+        KeyDescriptor encKeyDescriptor = new KeyDescriptorBuilder().buildObject();
+        encKeyDescriptor.setUse(UsageType.ENCRYPTION);
+
+        BasicX509Credential signingCredential = new BasicX509Credential();
+        signingCredential.setEntityCertificate(spMetadata.getSigningCertificate());
+
+        BasicX509Credential encryptionCredential = new BasicX509Credential();
+        encryptionCredential.setEntityCertificate(spMetadata.getEncryptionCertificate());
+
+        try {
+            signKeyDescriptor.setKeyInfo(keyInfoGenerator.generate(signingCredential));
+            encKeyDescriptor.setKeyInfo(keyInfoGenerator.generate(encryptionCredential));
+            spSSODescriptor.getKeyDescriptors().add(signKeyDescriptor);
+            spSSODescriptor.getKeyDescriptors().add(encKeyDescriptor);
+        } catch (SecurityException e) {
+            GetServiceProviderMetaDataCmd.s_logger.warn("Unable to add SP X509 descriptors:" + e.getMessage());
+        }
+
+        NameIDFormat nameIDFormat = new NameIDFormatBuilder().buildObject();
+        nameIDFormat.setFormat(NameIDType.PERSISTENT);
+        spSSODescriptor.getNameIDFormats().add(nameIDFormat);
+
+        NameIDFormat emailNameIDFormat = new NameIDFormatBuilder().buildObject();
+        emailNameIDFormat.setFormat(NameIDType.EMAIL);
+        spSSODescriptor.getNameIDFormats().add(emailNameIDFormat);
+
+        NameIDFormat transientNameIDFormat = new NameIDFormatBuilder().buildObject();
+        transientNameIDFormat.setFormat(NameIDType.TRANSIENT);
+        spSSODescriptor.getNameIDFormats().add(transientNameIDFormat);
+
+        AssertionConsumerService assertionConsumerService = new AssertionConsumerServiceBuilder().buildObject();
+        assertionConsumerService.setIndex(1);
+        assertionConsumerService.setIsDefault(true);
+        assertionConsumerService.setBinding(SAMLConstants.SAML2_POST_BINDING_URI);
+        assertionConsumerService.setLocation(spMetadata.getSsoUrl());
+        spSSODescriptor.getAssertionConsumerServices().add(assertionConsumerService);
+
+        AssertionConsumerService assertionConsumerService2 = new AssertionConsumerServiceBuilder().buildObject();
+        assertionConsumerService2.setIndex(2);
+        assertionConsumerService2.setBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+        assertionConsumerService2.setLocation(spMetadata.getSsoUrl());
+        spSSODescriptor.getAssertionConsumerServices().add(assertionConsumerService2);
+
+        SingleLogoutService ssoService = new SingleLogoutServiceBuilder().buildObject();
+        ssoService.setBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+        ssoService.setLocation(spMetadata.getSloUrl());
+        spSSODescriptor.getSingleLogoutServices().add(ssoService);
+
+        SingleLogoutService ssoService2 = new SingleLogoutServiceBuilder().buildObject();
+        ssoService2.setBinding(SAMLConstants.SAML2_POST_BINDING_URI);
+        ssoService2.setLocation(spMetadata.getSloUrl());
+        spSSODescriptor.getSingleLogoutServices().add(ssoService2);
+
+        spSSODescriptor.addSupportedProtocol(SAMLConstants.SAML20P_NS);
+        spEntityDescriptor.getRoleDescriptors().add(spSSODescriptor);
+
+        // Add technical contact
+        GivenName givenName = new GivenNameBuilder().buildObject();
+        givenName.setName(spMetadata.getContactPersonName());
+        EmailAddress emailAddress = new EmailAddressBuilder().buildObject();
+        emailAddress.setAddress(spMetadata.getContactPersonEmail());
+        ContactPerson contactPerson = new ContactPersonBuilder().buildObject();
+        contactPerson.setType(ContactPersonTypeEnumeration.TECHNICAL);
+        contactPerson.setGivenName(givenName);
+        contactPerson.getEmailAddresses().add(emailAddress);
+        spEntityDescriptor.getContactPersons().add(contactPerson);
+
+        // Add administrative/support contact
+        GivenName givenNameAdmin = new GivenNameBuilder().buildObject();
+        givenNameAdmin.setName(spMetadata.getContactPersonName());
+        EmailAddress emailAddressAdmin = new EmailAddressBuilder().buildObject();
+        emailAddressAdmin.setAddress(spMetadata.getContactPersonEmail());
+        ContactPerson contactPersonAdmin = new ContactPersonBuilder().buildObject();
+        contactPersonAdmin.setType(ContactPersonTypeEnumeration.ADMINISTRATIVE);
+        contactPersonAdmin.setGivenName(givenNameAdmin);
+        contactPersonAdmin.getEmailAddresses().add(emailAddressAdmin);
+        spEntityDescriptor.getContactPersons().add(contactPersonAdmin);
+
+        Organization organization = new OrganizationBuilder().buildObject();
+        OrganizationName organizationName = new OrganizationNameBuilder().buildObject();
+        organizationName.setName(new LocalizedString(spMetadata.getOrganizationName(), Locale.getDefault().getLanguage()));
+        OrganizationURL organizationURL = new OrganizationURLBuilder().buildObject();
+        organizationURL.setURL(new LocalizedString(spMetadata.getOrganizationUrl(), Locale.getDefault().getLanguage()));
+        organization.getOrganizationNames().add(organizationName);
+        organization.getURLs().add(organizationURL);
+        spEntityDescriptor.setOrganization(organization);
+        return spEntityDescriptor;
+    }
 
     public String getSAMLIdentityProviderMetadataURL(){
         return SAMLIdentityProviderMetadataURL.value();
@@ -117,6 +271,9 @@ public class SAML2AuthManagerImpl extends AdapterBase implements SAML2AuthManage
 
     @Inject
     DomainManager _domainMgr;
+
+    @Inject
+    AlertManager _alertMgr;
 
     @Override
     public boolean start() {
@@ -352,6 +509,17 @@ public class SAML2AuthManagerImpl extends AdapterBase implements SAML2AuthManage
                 _idpMetadataMap = metadataMap;
                 expireTokens();
                 s_logger.debug("Finished refreshing SAML Metadata and expiring old auth tokens");
+
+                Date notAfterDate = _spMetadata.getSigningCertificate().getNotAfter();
+                DateTime notAfter = new DateTime(notAfterDate);
+                DateTime now = DateTime.now(DateTimeZone.UTC);
+                DateTime alertDate = notAfter.minusDays(SAMLCertificateExpireAlertDays.value());
+                if (now.isAfter(alertDate) && !certExpireAlertSent) {
+                    s_logger.info("SAML Certificate is expiring soon");
+                    _alertMgr.sendAlert(AlertService.AlertType.ALERT_TYPE_CA_CERT, -1L, null, "SAML SSO Cert is Expiring Soon",
+                            "The internal certificate ACS uses to sign requests to the SAML IDP is expiring on: " + notAfter);
+                    certExpireAlertSent = true;
+                }
             } catch (MetadataProviderException e) {
                 s_logger.warn("SAML Metadata Refresh task failed with exception: " + e.getMessage());
             }
@@ -512,6 +680,56 @@ public class SAML2AuthManagerImpl extends AdapterBase implements SAML2AuthManage
         session.setAttribute(SAMLPluginConstants.SAML_SESSION_LISTENER, new SAMLActiveUser(_samlTokenDao));
     }
 
+    public SAMLProviderMetadata renewCertificates() {
+        KeystoreVO keyStoreVO = _ksDao.findByName(SAMLPluginConstants.SAMLSP_KEYPAIR);
+        if (keyStoreVO == null) {
+            throw new CloudRuntimeException("Unable to find existing keys, can't renew certificate without keys");
+        }
+
+        KeystoreVO x509VO = _ksDao.findByName(SAMLPluginConstants.SAMLSP_X509CERT);
+        if (x509VO == null) {
+            throw new CloudRuntimeException("Unable to find existing certificate, can't renew certificate without an existing certificate");
+        }
+
+        try {
+            final PrivateKey privateKey = SAMLUtils.decodePrivateKey(keyStoreVO.getCertificate());
+            final PublicKey publicKey = SAMLUtils.decodePublicKey(keyStoreVO.getKey());
+            if (privateKey == null || publicKey == null) {
+                throw new CloudRuntimeException("Unable to get public/private keys for SAML");
+            }
+
+            KeyPair spKeyPair = new KeyPair(publicKey, privateKey);
+            X509Certificate spX509Key = SAMLUtils.generateRandomX509Certificate(spKeyPair);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutput out = new ObjectOutputStream(bos);
+            out.writeObject(spX509Key);
+            out.flush();
+            _ksDao.save(SAMLPluginConstants.SAMLSP_X509CERT, Base64.encodeBase64String(bos.toByteArray()), "", "samlsp-x509cert");
+            bos.close();
+            _spMetadata.setSigningCertificate(spX509Key);
+            _spMetadata.setEncryptionCertificate(spX509Key);
+            return _spMetadata;
+        } catch (final NoSuchAlgorithmException | NoSuchProviderException | CertificateException | SignatureException | InvalidKeyException | IOException | OperatorCreationException e) {
+            s_logger.error("Unable to renew SAML certificates", e);
+            throw new CloudRuntimeException("Unable to renew SAML certificates", e);
+        }
+    }
+
+    @Override
+    public void getDescriptorXmlString(EntityDescriptor spEntityDescriptor, StringWriter stringWriter) throws ParserConfigurationException, MarshallingException, TransformerException, IOException {
+        DocumentBuilderFactory factory = ParserUtils.getSaferDocumentBuilderFactory();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document document = builder.newDocument();
+        Marshaller out = Configuration.getMarshallerFactory().getMarshaller(spEntityDescriptor);
+        out.marshall(spEntityDescriptor, document);
+
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        StreamResult streamResult = new StreamResult(stringWriter);
+        DOMSource source = new DOMSource(document);
+        transformer.transform(source, streamResult);
+        stringWriter.close();
+    }
+
     public Boolean isSAMLPluginEnabled() {
         return SAMLIsPluginEnabled.value();
     }
@@ -543,6 +761,8 @@ public class SAML2AuthManagerImpl extends AdapterBase implements SAML2AuthManage
         }
         cmdList.add(AuthorizeSAMLSSOCmd.class);
         cmdList.add(ListSamlAuthorizationCmd.class);
+        cmdList.add(RenewServiceProviderCertificateCmd.class);
+        cmdList.add(GetServiceProviderMetaDataParsedCmd.class);
         return cmdList;
     }
 
@@ -555,6 +775,7 @@ public class SAML2AuthManagerImpl extends AdapterBase implements SAML2AuthManage
                 SAMLServiceProviderSingleSignOnURL, SAMLServiceProviderSingleLogOutURL,
                 SAMLCloudStackRedirectionUrl, SAMLUserAttributeName,
                 SAMLIdentityProviderMetadataURL, SAMLDefaultIdentityProviderId,
-                SAMLSignatureAlgorithm, SAMLAppendDomainSuffix, SAMLTimeout, SAMLSupportHostnameAliases};
+                SAMLSignatureAlgorithm, SAMLAppendDomainSuffix, SAMLTimeout, SAMLSupportHostnameAliases,
+                SAMLCertificateValidityLength, SAMLCertificateExpireAlertDays};
     }
 }

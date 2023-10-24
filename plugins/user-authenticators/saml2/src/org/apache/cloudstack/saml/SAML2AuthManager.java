@@ -20,8 +20,14 @@ package org.apache.cloudstack.saml;
 import com.cloud.utils.component.PluggableService;
 import org.apache.cloudstack.api.auth.PluggableAPIAuthenticator;
 import org.apache.cloudstack.framework.config.ConfigKey;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.xml.io.MarshallingException;
 
 import javax.servlet.http.HttpSession;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Collection;
 
 public interface SAML2AuthManager extends PluggableAPIAuthenticator, PluggableService {
@@ -73,6 +79,15 @@ public interface SAML2AuthManager extends PluggableAPIAuthenticator, PluggableSe
 
     public static final ConfigKey<Boolean> SAMLSupportHostnameAliases = new ConfigKey<Boolean>("Advanced", Boolean.class, "saml2.hostnameAliases.enabled", "false",
             "Enables support for other Service Provider hostnames. Dynamically updates SSO URL and tracks and redirects to user's SLO URL for IdP initiated SLO.", true);
+
+    public static final ConfigKey<Integer> SAMLCertificateValidityLength = new ConfigKey<>("Advanced", Integer.class, "saml2.certificate.validityLength", "3",
+            "How long should a SAML certificate that ACS generates be valid for", true);
+
+    public static final ConfigKey<Integer> SAMLCertificateExpireAlertDays = new ConfigKey<>("Advanced", Integer.class, "saml2.certificate.alertDays", "14",
+             "How many days before expiring should an alert be sent", true);
+
+    EntityDescriptor getEntityDescriptor(SAMLProviderMetadata spMetadata);
+
     public SAMLProviderMetadata getSPMetadata();
     public SAMLProviderMetadata getIdPMetadata(String entityId);
     public Collection<SAMLProviderMetadata> getAllIdPMetadata();
@@ -87,4 +102,8 @@ public interface SAML2AuthManager extends PluggableAPIAuthenticator, PluggableSe
     public SAMLTokenVO getTokenBySessionIndexWhereNotSpBaseUrl(String sessionIndex, String spBaseUrl);
     public void expireTokens();
     public void attachTokenToSession(HttpSession session, SAMLTokenVO token);
+
+    public SAMLProviderMetadata renewCertificates();
+
+    void getDescriptorXmlString(EntityDescriptor spEntityDescriptor, StringWriter stringWriter) throws ParserConfigurationException, MarshallingException, TransformerException, IOException;
 }

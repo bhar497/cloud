@@ -264,6 +264,94 @@
                 getData();
                 return false;
             });
+            $dashboard.find('#view_sp_metadata_button').click(function() {
+                $.ajax({
+                    url: createURL("getSPMetadataParsed"),
+                    dataType: "json",
+                    success: function(json) {
+                        var result = json.spmetadataparsedresponse.spmetadataparsedresponse;
+                        let dialogWidth = 600;
+                        let valueWidth = dialogWidth*.94-115-15;
+                        let escapedXml = result.descriptorXml.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;").replace(/\n/g, "");
+                        $(
+                            $('<div>').addClass('form-container').html(`
+                                <div class="form-item">
+                                    <div class="name"><label>Cert Valid Not Before</label></div>
+                                    <div class="value" style="width: ${valueWidth}px">${result.certificatenotbefore}</div>
+                                </div>
+                                <div class="form-item">
+                                    <div class="name"><label>Cert Valid Not After</label></div>
+                                    <div class="value" style="width: ${valueWidth}px">${result.certificatenotafter}</div>
+                                </div>
+                                <div class="form-item">
+                                    <div class="name"><label>Entity ID</label></div>
+                                    <div class="value" style="width: ${valueWidth}px">${result.entityid}</div>
+                                </div>
+                                <div class="form-item">
+                                    <div class="name"><label>Org Name</label></div>
+                                    <div class="value" style="width: ${valueWidth}px">${result.orgname}</div>
+                                </div>
+                                <div class="form-item">
+                                    <div class="name"><label>Org URL</label></div>
+                                    <div class="value" style="width: ${valueWidth}px">${result.orgurl}</div>
+                                </div>
+                                <div class="form-item">
+                                    <div class="name"><label>Sign-on Url</label></div>
+                                    <div class="value" style="width: ${valueWidth}px">${result.ssourl}</div>
+                                </div>
+                                <div class="form-item">
+                                    <div class="name"><label>Sign-out URL</label></div>
+                                    <div class="value" style="width: ${valueWidth}px">${result.slourl}</div>
+                                </div>
+                                <div class="form-item">
+                                    <div class="name"><label>Contact Name</label></div>
+                                    <div class="value" style="width: ${valueWidth}px">${result.contactname}</div>
+                                </div>
+                                <div class="form-item">
+                                    <div class="name"><label>Contact Email</label></div>
+                                    <div class="value" style="width: ${valueWidth}px">${result.contactemail}</div>
+                                </div>
+                                <div>Raw Service Provider XML</div>
+                                <div style="height: 300px; overflow: scroll">
+                                    ${escapedXml}
+                                </div>
+                            `)
+                        ).dialog({
+                            title: 'SAML Service Provider Metadata',
+                            dialogClass: 'form-container',
+                            closeOnEscape: true,
+                            zIndex: 5000,
+                            width: dialogWidth,
+                            buttons: [{
+                                text: "Close",
+                                'class': 'cancel',
+                                click: function() {
+                                    $(this).dialog('destroy');
+                                    $('.hovered-elem').hide();
+                                }
+                            }, {
+                                text: "Renew Cert",
+                                click: function() {
+                                    let parentDialog = $(this);
+                                    cloudStack.dialog.confirm({message: "Are you sure you want to renew the SAML certificate?", action: function() {
+                                            $.ajax({
+                                                url: createURL('renewSPCertificates'),
+                                                dataType: "json",
+                                                success: function(json) {
+                                                    parentDialog.dialog('destroy');
+                                                }
+                                            })
+                                        }});
+                                }
+                            }]
+                        })
+                    },
+                    error: function(XMLHttpResponse) {
+
+                    }
+                })
+                return false;
+            })
             return resourceChart(args);
         };
     };
