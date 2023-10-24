@@ -272,7 +272,7 @@
                         var result = json.spmetadataparsedresponse.spmetadataparsedresponse;
                         let dialogWidth = 600;
                         let valueWidth = dialogWidth*.94-115-15;
-                        let escapedXml = result.descriptorXml.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;").replace(/\n/g, "");
+                        let escapedXml = result.descriptorxml.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;").replace(/\n/g, "");
                         $(
                             $('<div>').addClass('form-container').html(`
                                 <div class="form-item">
