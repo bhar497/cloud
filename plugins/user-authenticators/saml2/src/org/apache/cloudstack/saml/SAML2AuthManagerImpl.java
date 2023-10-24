@@ -516,7 +516,7 @@ public class SAML2AuthManagerImpl extends AdapterBase implements SAML2AuthManage
                 DateTime alertDate = notAfter.minusDays(SAMLCertificateExpireAlertDays.value());
                 if (now.isAfter(alertDate) && !certExpireAlertSent) {
                     s_logger.info("SAML Certificate is expiring soon");
-                    _alertMgr.sendAlert(AlertService.AlertType.ALERT_TYPE_CA_CERT, -1L, null, "SAML SSO Cert is Expiring Soon",
+                    _alertMgr.sendAlert(AlertService.AlertType.ALERT_TYPE_CA_CERT, 0L, null, "SAML SSO Cert is Expiring Soon",
                             "The internal certificate ACS uses to sign requests to the SAML IDP is expiring on: " + notAfter);
                     certExpireAlertSent = true;
                 }
