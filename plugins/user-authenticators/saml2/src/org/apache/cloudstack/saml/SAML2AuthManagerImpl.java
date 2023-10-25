@@ -151,111 +151,6 @@ public class SAML2AuthManagerImpl extends AdapterBase implements SAML2AuthManage
 
     private Boolean certExpireAlertSent = false;
 
-    @Override
-    public EntityDescriptor getEntityDescriptor(SAMLProviderMetadata spMetadata) {
-        EntityDescriptor spEntityDescriptor = new EntityDescriptorBuilder().buildObject();
-        spEntityDescriptor.setEntityID(spMetadata.getEntityId());
-
-        SPSSODescriptor spSSODescriptor = new SPSSODescriptorBuilder().buildObject();
-        spSSODescriptor.setWantAssertionsSigned(true);
-        spSSODescriptor.setAuthnRequestsSigned(true);
-
-        X509KeyInfoGeneratorFactory keyInfoGeneratorFactory = new X509KeyInfoGeneratorFactory();
-        keyInfoGeneratorFactory.setEmitEntityCertificate(true);
-        KeyInfoGenerator keyInfoGenerator = keyInfoGeneratorFactory.newInstance();
-
-        KeyDescriptor signKeyDescriptor = new KeyDescriptorBuilder().buildObject();
-        signKeyDescriptor.setUse(UsageType.SIGNING);
-
-        KeyDescriptor encKeyDescriptor = new KeyDescriptorBuilder().buildObject();
-        encKeyDescriptor.setUse(UsageType.ENCRYPTION);
-
-        BasicX509Credential signingCredential = new BasicX509Credential();
-        signingCredential.setEntityCertificate(spMetadata.getSigningCertificate());
-
-        BasicX509Credential encryptionCredential = new BasicX509Credential();
-        encryptionCredential.setEntityCertificate(spMetadata.getEncryptionCertificate());
-
-        try {
-            signKeyDescriptor.setKeyInfo(keyInfoGenerator.generate(signingCredential));
-            encKeyDescriptor.setKeyInfo(keyInfoGenerator.generate(encryptionCredential));
-            spSSODescriptor.getKeyDescriptors().add(signKeyDescriptor);
-            spSSODescriptor.getKeyDescriptors().add(encKeyDescriptor);
-        } catch (SecurityException e) {
-            GetServiceProviderMetaDataCmd.s_logger.warn("Unable to add SP X509 descriptors:" + e.getMessage());
-        }
-
-        NameIDFormat nameIDFormat = new NameIDFormatBuilder().buildObject();
-        nameIDFormat.setFormat(NameIDType.PERSISTENT);
-        spSSODescriptor.getNameIDFormats().add(nameIDFormat);
-
-        NameIDFormat emailNameIDFormat = new NameIDFormatBuilder().buildObject();
-        emailNameIDFormat.setFormat(NameIDType.EMAIL);
-        spSSODescriptor.getNameIDFormats().add(emailNameIDFormat);
-
-        NameIDFormat transientNameIDFormat = new NameIDFormatBuilder().buildObject();
-        transientNameIDFormat.setFormat(NameIDType.TRANSIENT);
-        spSSODescriptor.getNameIDFormats().add(transientNameIDFormat);
-
-        AssertionConsumerService assertionConsumerService = new AssertionConsumerServiceBuilder().buildObject();
-        assertionConsumerService.setIndex(1);
-        assertionConsumerService.setIsDefault(true);
-        assertionConsumerService.setBinding(SAMLConstants.SAML2_POST_BINDING_URI);
-        assertionConsumerService.setLocation(spMetadata.getSsoUrl());
-        spSSODescriptor.getAssertionConsumerServices().add(assertionConsumerService);
-
-        AssertionConsumerService assertionConsumerService2 = new AssertionConsumerServiceBuilder().buildObject();
-        assertionConsumerService2.setIndex(2);
-        assertionConsumerService2.setBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
-        assertionConsumerService2.setLocation(spMetadata.getSsoUrl());
-        spSSODescriptor.getAssertionConsumerServices().add(assertionConsumerService2);
-
-        SingleLogoutService ssoService = new SingleLogoutServiceBuilder().buildObject();
-        ssoService.setBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
-        ssoService.setLocation(spMetadata.getSloUrl());
-        spSSODescriptor.getSingleLogoutServices().add(ssoService);
-
-        SingleLogoutService ssoService2 = new SingleLogoutServiceBuilder().buildObject();
-        ssoService2.setBinding(SAMLConstants.SAML2_POST_BINDING_URI);
-        ssoService2.setLocation(spMetadata.getSloUrl());
-        spSSODescriptor.getSingleLogoutServices().add(ssoService2);
-
-        spSSODescriptor.addSupportedProtocol(SAMLConstants.SAML20P_NS);
-        spEntityDescriptor.getRoleDescriptors().add(spSSODescriptor);
-
-        // Add technical contact
-        GivenName givenName = new GivenNameBuilder().buildObject();
-        givenName.setName(spMetadata.getContactPersonName());
-        EmailAddress emailAddress = new EmailAddressBuilder().buildObject();
-        emailAddress.setAddress(spMetadata.getContactPersonEmail());
-        ContactPerson contactPerson = new ContactPersonBuilder().buildObject();
-        contactPerson.setType(ContactPersonTypeEnumeration.TECHNICAL);
-        contactPerson.setGivenName(givenName);
-        contactPerson.getEmailAddresses().add(emailAddress);
-        spEntityDescriptor.getContactPersons().add(contactPerson);
-
-        // Add administrative/support contact
-        GivenName givenNameAdmin = new GivenNameBuilder().buildObject();
-        givenNameAdmin.setName(spMetadata.getContactPersonName());
-        EmailAddress emailAddressAdmin = new EmailAddressBuilder().buildObject();
-        emailAddressAdmin.setAddress(spMetadata.getContactPersonEmail());
-        ContactPerson contactPersonAdmin = new ContactPersonBuilder().buildObject();
-        contactPersonAdmin.setType(ContactPersonTypeEnumeration.ADMINISTRATIVE);
-        contactPersonAdmin.setGivenName(givenNameAdmin);
-        contactPersonAdmin.getEmailAddresses().add(emailAddressAdmin);
-        spEntityDescriptor.getContactPersons().add(contactPersonAdmin);
-
-        Organization organization = new OrganizationBuilder().buildObject();
-        OrganizationName organizationName = new OrganizationNameBuilder().buildObject();
-        organizationName.setName(new LocalizedString(spMetadata.getOrganizationName(), Locale.getDefault().getLanguage()));
-        OrganizationURL organizationURL = new OrganizationURLBuilder().buildObject();
-        organizationURL.setURL(new LocalizedString(spMetadata.getOrganizationUrl(), Locale.getDefault().getLanguage()));
-        organization.getOrganizationNames().add(organizationName);
-        organization.getURLs().add(organizationURL);
-        spEntityDescriptor.setOrganization(organization);
-        return spEntityDescriptor;
-    }
-
     public String getSAMLIdentityProviderMetadataURL(){
         return SAMLIdentityProviderMetadataURL.value();
     }
@@ -728,6 +623,111 @@ public class SAML2AuthManagerImpl extends AdapterBase implements SAML2AuthManage
         DOMSource source = new DOMSource(document);
         transformer.transform(source, streamResult);
         stringWriter.close();
+    }
+
+    @Override
+    public EntityDescriptor getEntityDescriptor(SAMLProviderMetadata spMetadata) {
+        EntityDescriptor spEntityDescriptor = new EntityDescriptorBuilder().buildObject();
+        spEntityDescriptor.setEntityID(spMetadata.getEntityId());
+
+        SPSSODescriptor spSSODescriptor = new SPSSODescriptorBuilder().buildObject();
+        spSSODescriptor.setWantAssertionsSigned(true);
+        spSSODescriptor.setAuthnRequestsSigned(true);
+
+        X509KeyInfoGeneratorFactory keyInfoGeneratorFactory = new X509KeyInfoGeneratorFactory();
+        keyInfoGeneratorFactory.setEmitEntityCertificate(true);
+        KeyInfoGenerator keyInfoGenerator = keyInfoGeneratorFactory.newInstance();
+
+        KeyDescriptor signKeyDescriptor = new KeyDescriptorBuilder().buildObject();
+        signKeyDescriptor.setUse(UsageType.SIGNING);
+
+        KeyDescriptor encKeyDescriptor = new KeyDescriptorBuilder().buildObject();
+        encKeyDescriptor.setUse(UsageType.ENCRYPTION);
+
+        BasicX509Credential signingCredential = new BasicX509Credential();
+        signingCredential.setEntityCertificate(spMetadata.getSigningCertificate());
+
+        BasicX509Credential encryptionCredential = new BasicX509Credential();
+        encryptionCredential.setEntityCertificate(spMetadata.getEncryptionCertificate());
+
+        try {
+            signKeyDescriptor.setKeyInfo(keyInfoGenerator.generate(signingCredential));
+            encKeyDescriptor.setKeyInfo(keyInfoGenerator.generate(encryptionCredential));
+            spSSODescriptor.getKeyDescriptors().add(signKeyDescriptor);
+            spSSODescriptor.getKeyDescriptors().add(encKeyDescriptor);
+        } catch (SecurityException e) {
+            GetServiceProviderMetaDataCmd.s_logger.warn("Unable to add SP X509 descriptors:" + e.getMessage());
+        }
+
+        NameIDFormat nameIDFormat = new NameIDFormatBuilder().buildObject();
+        nameIDFormat.setFormat(NameIDType.PERSISTENT);
+        spSSODescriptor.getNameIDFormats().add(nameIDFormat);
+
+        NameIDFormat emailNameIDFormat = new NameIDFormatBuilder().buildObject();
+        emailNameIDFormat.setFormat(NameIDType.EMAIL);
+        spSSODescriptor.getNameIDFormats().add(emailNameIDFormat);
+
+        NameIDFormat transientNameIDFormat = new NameIDFormatBuilder().buildObject();
+        transientNameIDFormat.setFormat(NameIDType.TRANSIENT);
+        spSSODescriptor.getNameIDFormats().add(transientNameIDFormat);
+
+        AssertionConsumerService assertionConsumerService = new AssertionConsumerServiceBuilder().buildObject();
+        assertionConsumerService.setIndex(1);
+        assertionConsumerService.setIsDefault(true);
+        assertionConsumerService.setBinding(SAMLConstants.SAML2_POST_BINDING_URI);
+        assertionConsumerService.setLocation(spMetadata.getSsoUrl());
+        spSSODescriptor.getAssertionConsumerServices().add(assertionConsumerService);
+
+        AssertionConsumerService assertionConsumerService2 = new AssertionConsumerServiceBuilder().buildObject();
+        assertionConsumerService2.setIndex(2);
+        assertionConsumerService2.setBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+        assertionConsumerService2.setLocation(spMetadata.getSsoUrl());
+        spSSODescriptor.getAssertionConsumerServices().add(assertionConsumerService2);
+
+        SingleLogoutService ssoService = new SingleLogoutServiceBuilder().buildObject();
+        ssoService.setBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+        ssoService.setLocation(spMetadata.getSloUrl());
+        spSSODescriptor.getSingleLogoutServices().add(ssoService);
+
+        SingleLogoutService ssoService2 = new SingleLogoutServiceBuilder().buildObject();
+        ssoService2.setBinding(SAMLConstants.SAML2_POST_BINDING_URI);
+        ssoService2.setLocation(spMetadata.getSloUrl());
+        spSSODescriptor.getSingleLogoutServices().add(ssoService2);
+
+        spSSODescriptor.addSupportedProtocol(SAMLConstants.SAML20P_NS);
+        spEntityDescriptor.getRoleDescriptors().add(spSSODescriptor);
+
+        // Add technical contact
+        GivenName givenName = new GivenNameBuilder().buildObject();
+        givenName.setName(spMetadata.getContactPersonName());
+        EmailAddress emailAddress = new EmailAddressBuilder().buildObject();
+        emailAddress.setAddress(spMetadata.getContactPersonEmail());
+        ContactPerson contactPerson = new ContactPersonBuilder().buildObject();
+        contactPerson.setType(ContactPersonTypeEnumeration.TECHNICAL);
+        contactPerson.setGivenName(givenName);
+        contactPerson.getEmailAddresses().add(emailAddress);
+        spEntityDescriptor.getContactPersons().add(contactPerson);
+
+        // Add administrative/support contact
+        GivenName givenNameAdmin = new GivenNameBuilder().buildObject();
+        givenNameAdmin.setName(spMetadata.getContactPersonName());
+        EmailAddress emailAddressAdmin = new EmailAddressBuilder().buildObject();
+        emailAddressAdmin.setAddress(spMetadata.getContactPersonEmail());
+        ContactPerson contactPersonAdmin = new ContactPersonBuilder().buildObject();
+        contactPersonAdmin.setType(ContactPersonTypeEnumeration.ADMINISTRATIVE);
+        contactPersonAdmin.setGivenName(givenNameAdmin);
+        contactPersonAdmin.getEmailAddresses().add(emailAddressAdmin);
+        spEntityDescriptor.getContactPersons().add(contactPersonAdmin);
+
+        Organization organization = new OrganizationBuilder().buildObject();
+        OrganizationName organizationName = new OrganizationNameBuilder().buildObject();
+        organizationName.setName(new LocalizedString(spMetadata.getOrganizationName(), Locale.getDefault().getLanguage()));
+        OrganizationURL organizationURL = new OrganizationURLBuilder().buildObject();
+        organizationURL.setURL(new LocalizedString(spMetadata.getOrganizationUrl(), Locale.getDefault().getLanguage()));
+        organization.getOrganizationNames().add(organizationName);
+        organization.getURLs().add(organizationURL);
+        spEntityDescriptor.setOrganization(organization);
+        return spEntityDescriptor;
     }
 
     public Boolean isSAMLPluginEnabled() {

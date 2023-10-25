@@ -86,8 +86,6 @@ public interface SAML2AuthManager extends PluggableAPIAuthenticator, PluggableSe
     public static final ConfigKey<Integer> SAMLCertificateExpireAlertDays = new ConfigKey<>("Advanced", Integer.class, "saml2.certificate.alertDays", "14",
              "How many days before expiring should an alert be sent", true);
 
-    EntityDescriptor getEntityDescriptor(SAMLProviderMetadata spMetadata);
-
     public SAMLProviderMetadata getSPMetadata();
     public SAMLProviderMetadata getIdPMetadata(String entityId);
     public Collection<SAMLProviderMetadata> getAllIdPMetadata();
@@ -106,4 +104,6 @@ public interface SAML2AuthManager extends PluggableAPIAuthenticator, PluggableSe
     public SAMLProviderMetadata renewCertificates();
 
     void getDescriptorXmlString(EntityDescriptor spEntityDescriptor, StringWriter stringWriter) throws ParserConfigurationException, MarshallingException, TransformerException, IOException;
+
+    EntityDescriptor getEntityDescriptor(SAMLProviderMetadata spMetadata);
 }
