@@ -41,6 +41,7 @@ import org.apache.cloudstack.api.ServerApiException;
 import org.apache.cloudstack.api.auth.APIAuthenticationManager;
 import org.apache.cloudstack.api.auth.APIAuthenticationType;
 import org.apache.cloudstack.api.auth.APIAuthenticator;
+import com.cloud.api.auth.ImpersonateUserCmd;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.managed.context.ManagedContext;
 import org.apache.log4j.Logger;
@@ -185,6 +186,18 @@ public class ApiServlet extends HttpServlet {
             final Object[] commandObj = params.get(ApiConstants.COMMAND);
             if (commandObj != null) {
                 final String command = (String) commandObj[0];
+                if (command.equals(ImpersonateUserCmd.APINAME)) {
+                    final Long userId = (Long) session.getAttribute("userid");
+                    final User user = ApiDBUtils.findUserById(userId);
+                    final Account account = ApiDBUtils.findAccountById(user.getAccountId());
+                    if (account.getType() != (Account.ACCOUNT_TYPE_ADMIN)) {
+                        s_logger.info(String.format("User does not have permission to access the API"));
+                        auditTrailSb.append(" " + HttpServletResponse.SC_UNAUTHORIZED + " " + "User does not have permission to access the API");
+                        final String serializedResponse = apiServer.getSerializedApiError(HttpServletResponse.SC_UNAUTHORIZED, "User does not have permission to access the API", params, responseType);
+                        HttpUtils.writeHttpResponse(resp, serializedResponse, HttpServletResponse.SC_UNAUTHORIZED, responseType, ApiServer.JSONcontentType.value());
+                        return;
+                    }
+                }
 
                 APIAuthenticator apiAuthenticator = authManager.getAPIAuthenticator(command);
                 if (apiAuthenticator != null) {

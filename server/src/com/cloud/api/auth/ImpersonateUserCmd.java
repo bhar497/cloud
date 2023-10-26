@@ -47,6 +47,7 @@ import java.net.InetAddress;
 public class ImpersonateUserCmd extends BaseCmd implements APIAuthenticator {
 
     public static final Logger s_logger = Logger.getLogger(ImpersonateUserCmd.class.getName());
+    public static final String APINAME = "impersonateUser";
     private static final String s_name = "loginresponse";
 
     /////////////////////////////////////////////////////
