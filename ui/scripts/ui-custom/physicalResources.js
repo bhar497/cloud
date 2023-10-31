@@ -347,7 +347,9 @@
                         })
                     },
                     error: function(XMLHttpResponse) {
-
+                        cloudStack.dialog.notice({
+                            message: 'Unable to get SAML Service Provider Metadata ' + parseXMLHttpResponse(XMLHttpResponse)
+                        });
                     }
                 })
                 return false;
