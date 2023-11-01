@@ -190,7 +190,7 @@ import com.cloud.utils.component.ManagerBase;
 import com.cloud.utils.concurrency.NamedThreadFactory;
 import com.cloud.utils.db.DB;
 import com.cloud.utils.db.EntityManager;
-import com.cloud.utils.db.SearchCriteria;
+//import com.cloud.utils.db.SearchCriteria;
 import com.cloud.utils.db.Transaction;
 import com.cloud.utils.db.TransactionCallbackNoReturn;
 import com.cloud.utils.db.TransactionStatus;
@@ -2112,18 +2112,19 @@ public class TemplateManagerImpl extends ManagerBase implements TemplateManager,
                 template.setGuestOSId(guestOSId);
             }
 
-            if (guestOSId != oldGuestOSId) { // vm guest os type need to be updated if template guest os id changes.
-                SearchCriteria<VMInstanceVO> sc = _vmInstanceDao.createSearchCriteria();
-                sc.addAnd("templateId", SearchCriteria.Op.EQ, id);
-                sc.addAnd("state", SearchCriteria.Op.NEQ, State.Expunging);
-                List<VMInstanceVO> vms = _vmInstanceDao.search(sc, null);
-                if (vms != null && !vms.isEmpty()) {
-                    for (VMInstanceVO vm: vms) {
-                        vm.setGuestOSId(guestOSId);
-                        _vmInstanceDao.update(vm.getId(), vm);
-                    }
-                }
-            }
+            // Preserved for future upstream merges
+//            if (guestOSId != oldGuestOSId) { // vm guest os type need to be updated if template guest os id changes.
+//                SearchCriteria<VMInstanceVO> sc = _vmInstanceDao.createSearchCriteria();
+//                sc.addAnd("templateId", SearchCriteria.Op.EQ, id);
+//                sc.addAnd("state", SearchCriteria.Op.NEQ, State.Expunging);
+//                List<VMInstanceVO> vms = _vmInstanceDao.search(sc, null);
+//                if (vms != null && !vms.isEmpty()) {
+//                    for (VMInstanceVO vm: vms) {
+//                        vm.setGuestOSId(guestOSId);
+//                        _vmInstanceDao.update(vm.getId(), vm);
+//                    }
+//                }
+//            }
         }
 
         if (passwordEnabled != null) {
