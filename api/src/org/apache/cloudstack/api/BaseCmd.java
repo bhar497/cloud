@@ -72,6 +72,7 @@ import org.apache.cloudstack.usage.UsageService;
 import org.apache.log4j.Logger;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpSession;
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -102,6 +103,8 @@ public abstract class BaseCmd {
     private Object _responseObject;
     private Map<String, String> fullUrlParams;
     private HTTPMethod httpMethod;
+
+    private HttpSession session;
     @Parameter(name = "response", type = CommandType.STRING)
     private String responseType;
 
@@ -228,6 +231,14 @@ public abstract class BaseCmd {
 
     public void setResponseType(final String responseType) {
         this.responseType = responseType;
+    }
+
+    public HttpSession getSession() {
+        return session;
+    }
+
+    public void setSession(HttpSession session) {
+        this.session = session;
     }
 
     /**

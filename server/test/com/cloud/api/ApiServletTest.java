@@ -180,7 +180,7 @@ public class ApiServletTest {
         Mockito.verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         Mockito.verify(apiServer, Mockito.never()).handleRequest(
                 Mockito.anyMap(), Mockito.anyString(),
-                Mockito.any(StringBuilder.class));
+                Mockito.any(StringBuilder.class), session);
     }
 
     @SuppressWarnings("unchecked")
@@ -194,7 +194,7 @@ public class ApiServletTest {
         Mockito.verify(response).setStatus(HttpServletResponse.SC_OK);
         Mockito.verify(apiServer, Mockito.times(1)).handleRequest(
                 Mockito.anyMap(), Mockito.anyString(),
-                Mockito.any(StringBuilder.class));
+                Mockito.any(StringBuilder.class), session);
     }
 
     @SuppressWarnings("unchecked")

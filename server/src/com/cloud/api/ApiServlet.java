@@ -186,18 +186,18 @@ public class ApiServlet extends HttpServlet {
             final Object[] commandObj = params.get(ApiConstants.COMMAND);
             if (commandObj != null) {
                 final String command = (String) commandObj[0];
-                if (command.equals(ImpersonateUserCmd.APINAME)) {
-                    final Long userId = (Long) session.getAttribute("userid");
-                    final User user = ApiDBUtils.findUserById(userId);
-                    final Account account = ApiDBUtils.findAccountById(user.getAccountId());
-                    if (account.getType() != (Account.ACCOUNT_TYPE_ADMIN)) {
-                        s_logger.info(String.format("User does not have permission to access the API"));
-                        auditTrailSb.append(" " + HttpServletResponse.SC_UNAUTHORIZED + " " + "User does not have permission to access the API");
-                        final String serializedResponse = apiServer.getSerializedApiError(HttpServletResponse.SC_UNAUTHORIZED, "User does not have permission to access the API", params, responseType);
-                        HttpUtils.writeHttpResponse(resp, serializedResponse, HttpServletResponse.SC_UNAUTHORIZED, responseType, ApiServer.JSONcontentType.value());
-                        return;
-                    }
-                }
+//                if (command.equals(ImpersonateUserCmd.APINAME)) {
+//                    final Long userId = (Long) session.getAttribute("userid");
+//                    final User user = ApiDBUtils.findUserById(userId);
+//                    final Account account = ApiDBUtils.findAccountById(user.getAccountId());
+//                    if (account.getType() != (Account.ACCOUNT_TYPE_ADMIN)) {
+//                        s_logger.info(String.format("User does not have permission to access the API"));
+//                        auditTrailSb.append(" " + HttpServletResponse.SC_UNAUTHORIZED + " " + "User does not have permission to access the API");
+//                        final String serializedResponse = apiServer.getSerializedApiError(HttpServletResponse.SC_UNAUTHORIZED, "User does not have permission to access the API", params, responseType);
+//                        HttpUtils.writeHttpResponse(resp, serializedResponse, HttpServletResponse.SC_UNAUTHORIZED, responseType, ApiServer.JSONcontentType.value());
+//                        return;
+//                    }
+//                }
 
                 APIAuthenticator apiAuthenticator = authManager.getAPIAuthenticator(command);
                 if (apiAuthenticator != null) {
@@ -320,7 +320,7 @@ public class ApiServlet extends HttpServlet {
 
                 // Add the HTTP method (GET/POST/PUT/DELETE) as well into the params map.
                 params.put("httpmethod", new String[]{req.getMethod()});
-                final String response = apiServer.handleRequest(params, responseType, auditTrailSb);
+                final String response = apiServer.handleRequest(params, responseType, auditTrailSb, session);
                 HttpUtils.writeHttpResponse(resp, response != null ? response : "", HttpServletResponse.SC_OK, responseType, ApiServer.JSONcontentType.value());
             } else {
                 if (session != null) {

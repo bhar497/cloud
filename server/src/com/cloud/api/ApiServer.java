@@ -459,7 +459,7 @@ public class ApiServer extends ManagerBase implements HttpRequestHandler, ApiSer
                 // always trust commands from API port, user context will always be UID_SYSTEM/ACCOUNT_ID_SYSTEM
                 CallContext.register(accountMgr.getSystemUser(), accountMgr.getSystemAccount());
                 sb.insert(0, "(userId=" + User.UID_SYSTEM + " accountId=" + Account.ACCOUNT_ID_SYSTEM + " sessionId=" + null + ") ");
-                final String responseText = handleRequest(parameterMap, responseType, sb);
+                final String responseText = handleRequest(parameterMap, responseType, sb, null);
                 sb.append(" 200 " + ((responseText == null) ? 0 : responseText.length()));
 
                 writeResponse(response, responseText, HttpStatus.SC_OK, responseType, null);
@@ -500,7 +500,7 @@ public class ApiServer extends ManagerBase implements HttpRequestHandler, ApiSer
 
     @Override
     @SuppressWarnings("rawtypes")
-    public String handleRequest(final Map params, final String responseType, final StringBuilder auditTrailSb) throws ServerApiException {
+    public String handleRequest(final Map params, final String responseType, final StringBuilder auditTrailSb, HttpSession session) throws ServerApiException {
         checkCharacterInkParams(params);
 
         String response = null;
@@ -550,6 +550,7 @@ public class ApiServer extends ManagerBase implements HttpRequestHandler, ApiSer
                     cmdObj.setFullUrlParams(paramMap);
                     cmdObj.setResponseType(responseType);
                     cmdObj.setHttpMethod(paramMap.get(ApiConstants.HTTPMETHOD).toString());
+                    cmdObj.setSession(session);
 
                     // This is where the command is either serialized, or directly dispatched
                     StringBuilder log = new StringBuilder();
@@ -1182,11 +1183,11 @@ public class ApiServer extends ManagerBase implements HttpRequestHandler, ApiSer
 
             // (bug 5483) generate a session key that the user must submit on every request to prevent CSRF, add that
             // to the login response so that session-based authenticators know to send the key back
-            final SecureRandom sesssionKeyRandom = new SecureRandom();
-            final byte sessionKeyBytes[] = new byte[20];
-            sesssionKeyRandom.nextBytes(sessionKeyBytes);
-            final String sessionKey = Base64.encodeBase64URLSafeString(sessionKeyBytes);
-            session.setAttribute(ApiConstants.SESSIONKEY, sessionKey);
+//            final SecureRandom sesssionKeyRandom = new SecureRandom();
+//            final byte sessionKeyBytes[] = new byte[20];
+//            sesssionKeyRandom.nextBytes(sessionKeyBytes);
+//            final String sessionKey = Base64.encodeBase64URLSafeString(sessionKeyBytes);
+//            session.setAttribute(ApiConstants.SESSIONKEY, sessionKey);
 
             return createLoginResponse(session);
         }
